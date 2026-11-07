@@ -27,21 +27,27 @@ One row per unit with its 1-star base stats (star scaling is applied by the sim)
 | Column (case-insensitive, other spellings accepted) | Notes |
 |---|---|
 | `name` (or unit, champion) | Required |
-| `role` | Team role, optionally with damage type, for example `Attack Tank` or `Magic Caster`. Assassin is read as Fighter |
-| `damage_type` | attack, magic or hybrid. Overrides the damage type in `role` |
+| `role` | Team role: Tank, Fighter, Assassin, Marksman, Caster or Specialist. May also include the damage type, for example `Attack Tank` ("Assasin" is accepted as a typo for Assassin) |
+| `damage_type` | Physical (or Attack), Magic, or Both (or Hybrid). Overrides the damage type in `role` |
 | `hp`, `ad`, `ap`, `attack_speed`, `armor`, `magic_resist`, `range` | Numbers |
 | `crit_chance`, `crit_damage`, `damage_amp`, `durability` | Percentages written as 25, not 0.25 |
 | `mana`, `mana_per_attack`, `mana_per_second` | Max mana and role mana rules |
-| `cost` (optional) | 1 to 5. Groups and colours the team builder tiles |
+| `cost` (optional) | Gold cost, 1 to 5. Groups the team builder and sets the tile border colour. The colours live in the `COSTCOL` constant in the script, not in the CSV |
 | `image` (optional) | An `https://` URL or a `data:image/...` URI. Quote data URIs, since they contain a comma |
 
 Missing columns use the role defaults. Unknown columns are ignored and listed after import. Commas, semicolons and tabs are detected as delimiters, quoted fields and Windows line endings are handled, and bad values are reported and replaced by role defaults.
 
 ## Team builder
 
-Every unit in the imported CSV appears as a tile. Left-click adds the unit to the side selected in the placement bar (Blue or Red), right-click adds it to the other side. Melee units fill the front rows first and ranged units the back rows, centre columns first. Search and role filters narrow the list, and "Clear blue" / "Clear red" empty one side. Adding is disabled while a fight is running or finished: press Reset first.
+Every unit in the imported CSV appears as a tile, grouped by cost with the cost colour as the border. Search and role filters narrow the list, and "Clear blue" / "Clear red" empty one side.
 
-Images: `unit-images.csv` maps every Set 18 unit name to a Community Dragon image URL. To add them to your own CSV run `python add_images.py your-units.csv`, which writes `your-units-with-images.csv`. If an image is missing or blocked, the tile shows the unit's initials instead. Pages served from `claude.ai` block remote images, so initials show there; served from GitHub Pages or opened locally the images load. The image URLs were copied from MetaBot's page and I could not load them to check, so confirm a few.
+- **Drag a tile onto the board.** The half of the board you drop it on decides its team (rows a-d on top are red, on the bottom are blue). Dropping on an occupied hex is refused.
+- **Click a tile** to add the unit to the team selected in the placement bar, **right-click** to add it to the other team. Melee units go to the front rows and ranged units to the back rows, centre columns first.
+- **Drag units already on the board** to move them to an empty hex, or onto another unit to swap places. Dropping off the board changes nothing. Click without moving to select a unit and edit its stats.
+- Moving and adding are disabled while a fight is running or finished: press Reset first.
+- Tile dragging uses pointer events and works with mouse and pen. On touch screens tap a tile to add it and drag units on the board.
+
+Images: the `image` column holds an `https://` URL or a `data:image/...` URI (quote data URIs, since they contain a comma). Images show on the tiles, on the board and on the drag ghost. If an image is missing or blocked the unit's initials are shown instead. Pages served from `claude.ai` block remote images, so initials show there; from GitHub Pages or a local file the images load. When served over http the page also loads `units-set18.csv` from its own folder on start.
 
 ## Design notes
 
@@ -70,4 +76,4 @@ Items, traits, augments, shields, healing, real champion abilities and data, cro
 
 ## Rules sources
 
-Role mana rules follow Riot's "Roles Revamped and Item Changes" article (Set 15 launch) with the patch 15.4 changes (Assassin merged into Fighter, Fighter omnivamp replaced by scaling attack speed, ranged units targeting before melee move). Roles may have changed in later sets.
+Role mana rules follow Riot's "Roles Revamped and Item Changes" article (Set 15 launch) with the patch 15.4 changes (Fighter omnivamp replaced by scaling attack speed, ranged units targeting before melee move). Patch 15.4 merged Assassin into Fighter, but the Set 18 unit data lists Assassins, so the sim treats Assassin as its own role again using the 15.1 launch rules: 10 mana per attack and less likely to be targeted (the tie-break puts Tanks first and Assassins last). That is an assumption. Roles may have changed in later sets.
