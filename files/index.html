@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TFT fight simulator</title>
+<style>
+:root{--bg:#f3f1ec;--panel:#fff;--ink:#1d2330;--mute:#6b7280;--line:#c9c5bb;--hex:#e6e2d8;--hexB:#ddd8cb;--a:#2a6fdb;--b:#d6453d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171f;--panel:#1d212c;--ink:#e8e9ee;--mute:#9aa1b2;--line:#363c4d;--hex:#252a38;--hexB:#2c3243;--a:#5b95f0;--b:#ef6a62;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14171f;--panel:#1d212c;--ink:#e8e9ee;--mute:#9aa1b2;--line:#363c4d;--hex:#252a38;--hexB:#2c3243;--a:#5b95f0;--b:#ef6a62;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Trebuchet MS","Segoe UI",system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:16px}
+h1{font:600 22px/1.2 Georgia,"Times New Roman",serif;margin:0 0 4px}
+h2{font:600 16px/1.3 Georgia,serif;margin:0 0 8px}
+p.sub{margin:0 0 14px;color:var(--mute)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.bar .grp{display:flex;flex-wrap:wrap;gap:4px;padding:3px;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+button,select,input{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+button,select{cursor:pointer}
+input[type=number]{width:100%;padding:4px 6px}
+#seed{width:80px}
+.grp button{border:0;background:transparent}
+.grp button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+button.go{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+canvas{display:block;width:100%;max-width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;touch-action:manipulation}
+#status{margin:10px 0 0;min-height:1.4em}
+.legend,.hint{color:var(--mute);font-size:13px;margin:6px 0}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:10px}
+.fields label{font-size:13px;color:var(--mute);display:block}
+pre{margin:0;white-space:pre-wrap;font:12px/1.5 ui-monospace,Consolas,monospace;max-height:220px;overflow:auto}
+</style>
+</head>
+<body>
+<main>
+<h1>TFT fight simulator</h1>
+<p class="sub">Place units, click one to edit its stats, then start the fight or run 200 seeded fights.</p>
+<div class="bar" role="toolbar" aria-label="Placement">
+  <div class="grp" id="teamGrp"><button data-team="A" aria-pressed="true">Blue team</button><button data-team="B" aria-pressed="false">Red team</button></div>
+  <div class="grp" id="dmgGrp" aria-label="Damage type"><button data-dmg="attack" aria-pressed="true">Attack</button><button data-dmg="magic" aria-pressed="false">Magic</button><button data-dmg="hybrid" aria-pressed="false">Hybrid</button></div>
+  <div class="grp" id="typeGrp" aria-label="Team role"><button data-type="tank" aria-pressed="false">Tank</button><button data-type="fighter" aria-pressed="true">Fighter</button><button data-type="marksman" aria-pressed="false">Marksman</button><button data-type="caster" aria-pressed="false">Caster</button><button data-type="specialist" aria-pressed="false">Specialist</button></div>
+</div>
+<div class="bar">
+  <button class="go" id="go">Start fight</button>
+  <button id="reset">Reset</button>
+  <button id="mc">Run 200 fights</button>
+  <button id="rand">Random boards</button>
+  <button id="clear">Clear</button>
+  <label>Stage <select id="stg"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option></select></label>
+  <label>Speed <select id="spd"><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option></select></label>
+  <label>Seed <input id="seed" type="number" value="1"></label>
+</div>
+<canvas id="cv" tabindex="0" aria-label="Hexagonal TFT board, 7 columns by 8 rows"></canvas>
+<p id="status" role="status" aria-live="polite"></p>
+<p class="legend">Dot colour is damage type (orange attack, purple magic, teal hybrid). Blue bar under health is mana. The same seed always replays the same fight.</p>
+<section id="insp" aria-live="polite"></section>
+<section><h2>Combat log</h2><pre id="log">Start a fight to see hits.</pre><pre id="totals"></pre></section>
+</main>
+<script>
+const COLS=7,ROWS=8,S=34,SQ=Math.sqrt(3);
+const PX=30,PY=24,W=Math.round(S*SQ*7.5+PX+12),H=Math.round(PY+S*1.5*7+2*S+24);
+const MOVE=0.55,DT=0.025,TIMEOUT=90,CASTTIME=0.5,AS_CAP=5;
+/* editable defaults per team role. mana = max mana, mpa = per attack, mps = per second */
+const ROLES={
+  tank:{hp:1300,ad:40,ap:100,as:0.55,armor:60,mr:60,range:1,crit:25,critDmg:140,amp:0,dur:0,mana:100,mpa:5,mps:0,label:'T'},
+  fighter:{hp:850,ad:60,ap:100,as:0.7,armor:40,mr:40,range:1,crit:25,critDmg:140,amp:0,dur:0,mana:80,mpa:10,mps:0,label:'F'},
+  marksman:{hp:500,ad:55,ap:100,as:0.8,armor:25,mr:25,range:4,crit:25,critDmg:140,amp:0,dur:0,mana:60,mpa:10,mps:0,label:'M'},
+  caster:{hp:480,ad:30,ap:100,as:0.7,armor:20,mr:20,range:4,crit:25,critDmg:140,amp:0,dur:0,mana:50,mpa:7,mps:2,label:'C'},
+  specialist:{hp:600,ad:50,ap:100,as:0.75,armor:30,mr:30,range:3,crit:25,critDmg:140,amp:0,dur:0,mana:0,mpa:0,mps:0,label:'S'}
+};
+const FIELDS=[['hp','Health'],['ad','Attack damage'],['ap','Ability power'],['as','Attack speed'],['armor','Armor'],['mr','Magic resist'],['range','Range (hexes)'],['crit','Crit chance %'],['critDmg','Crit damage %'],['amp','Damage amp %'],['dur','Durability %'],['mana','Max mana'],['mpa','Mana per attack'],['mps','Mana per second']];
+const STAR={hp:1.8,ad:1.5,spell:1.5}; /* per star above 1; unverified */
+const DEFDMG={tank:'attack',fighter:'attack',marksman:'attack',caster:'magic',specialist:'hybrid'};
+const DMGCOL={attack:'#e8913a',magic:'#a46bd6',hybrid:'#2fb5a3'};
+const FIGHTER_AS={2:0.05,3:0.10,4:0.20,5:0.30,6:0.30};
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d'),st=$('status'),insp=$('insp'),logEl=$('log'),totals=$('totals');
+cv.width=W;cv.height=H;
+let layout=[],sim=null,team='A',type='fighter',dmg='attack',running=false,last=0,acc=0,sel=-1;
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const stage=()=>Number($('stg').value),seedVal=()=>Math.floor(Number($('seed').value))||1,cap=s=>s[0].toUpperCase()+s.slice(1);
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* hex grid, odd-r offset */
+function cube(c,r){const x=c-(r-(r&1))/2;return[x,-x-r,r]}
+function dist(a,b){const p=cube(a.c,a.r),q=cube(b.c,b.r);return Math.max(Math.abs(p[0]-q[0]),Math.abs(p[1]-q[1]),Math.abs(p[2]-q[2]))}
+const DIRS=[[[1,0],[-1,0],[0,-1],[-1,-1],[0,1],[-1,1]],[[1,0],[-1,0],[1,-1],[0,-1],[1,1],[0,1]]];
+function nbrs(c,r){const o=[];for(const[d,e]of DIRS[r&1]){const x=c+d,y=r+e;if(x>=0&&x<COLS&&y>=0&&y<ROWS)o.push([x,y])}return o}
+function center(c,r){return[PX+S*SQ/2+S*SQ*(c+0.5*(r&1)),PY+S+1.5*S*r]}
+function cellAt(px,py){let b=null,bd=1e9;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const[x,y]=center(c,r),d=(x-px)**2+(y-py)**2;if(d<bd){bd=d;b=[c,r]}}return bd<=S*S?b:null}
+
+/* stats: base (role defaults + edits, star scaled) plus a list of modifiers {s:stat,f:flat,p:percent} */
+function mk(l,id){
+  const b={...ROLES[l.role],...l.o},k=(l.stars||1)-1;
+  b.hp*=STAR.hp**k;b.ad*=STAR.ad**k;
+  return{id,team:l.team,role:l.role,dmg:l.dmg,label:ROLES[l.role].label,stars:l.stars||1,b,
+    mods:l.role==='fighter'?[{s:'as',p:FIGHTER_AS[stage()]}]:[],
+    hp:b.hp,maxhp:b.hp,mana:0,mmax:b.mana,range:b.range,c:l.c,r:l.r,fx:l.c,fy:l.r,
+    moving:0,busy:0,nextAtk:0,target:null,hit:-9,cast:-9,dealt:0,taken:0};
+}
+function ev(u,k){let f=0,p=0;for(const m of u.mods)if(m.s===k){f+=m.f||0;p+=m.p||0}return(u.b[k]+f)*(1+p)}
+const rowName=r=>'abcd'[r<4?3-r:r-4];
+const tag=u=>u.label+(u.team==='A'?'b':'r');
+
+/* simulation */
+function newSim(seed,mc){const all=layout.map((l,i)=>mk(l,i));return{t:0,done:false,mc,seed,rng:rng(seed),log:[],all,units:[...all]}}
+function nearest(u){
+  /* lowest hex distance wins, tanks win ties on distance, any remaining tie is broken at random (seeded) */
+  let best=[],bd=1e9;
+  for(const e of sim.units){if(e.team===u.team||e.hp<=0)continue;const d=dist(u,e)*10+(e.role==='tank'?0:1);if(d<bd){bd=d;best=[e]}else if(d===bd)best.push(e)}
+  return best.length?best[Math.floor(sim.rng()*best.length)]:null;
+}
+function pathStep(u,tg){
+  const occ=new Set(sim.units.filter(x=>x!==u&&x.hp>0).map(x=>x.c+','+x.r));
+  const key=(c,r)=>c+','+r,par=new Map(),q=[[u.c,u.r]];
+  par.set(key(u.c,u.r),null);
+  for(let i=0;i<q.length;i++){
+    const[c,r]=q[i];
+    if(dist({c,r},tg)<=u.range){
+      let k=key(c,r),prev=null;
+      while(par.get(k)){prev=k;k=par.get(k)}
+      return prev?prev.split(',').map(Number):null;
+    }
+    for(const[x,y]of nbrs(c,r)){const k=key(x,y);if(par.has(k)||occ.has(k))continue;par.set(k,key(c,r));q.push([x,y])}
+  }
+  return null;
+}
+/* damage pipeline: raw -> crit -> amp -> armor/MR -> durability -> HP, then mana for tanks */
+function hit(src,tg,raw,type,canCrit,kind){
+  let amt=raw,crit=false;
+  if(canCrit&&sim.rng()<ev(src,'crit')/100){amt*=ev(src,'critDmg')/100;crit=true}
+  amt*=1+ev(src,'amp')/100;
+  const pre=amt;
+  if(type!=='true')amt*=100/(100+Math.max(0,ev(tg,type==='physical'?'armor':'mr')));
+  amt*=1-Math.min(0.9,ev(tg,'dur')/100);
+  sim.pend.push({src,tg,raw,pre,amt,type,kind,crit});
+}
+/* damage from one tick lands together, so two units that kill each other in the same tick both die */
+function applyPending(){
+  for(const p of sim.pend){
+    const{src,tg,raw,pre,amt,type,kind,crit}=p;
+    tg.hp-=amt;src.dealt+=amt;tg.taken+=amt;
+    if(tg.role==='tank'&&tg.mmax)tg.mana=Math.min(tg.mmax,tg.mana+Math.min(42,pre*0.01+amt*0.03));
+    if(!sim.mc){sim.log.push(`${sim.t.toFixed(2)}s ${tag(src)} > ${tag(tg)} ${kind} ${type} ${raw.toFixed(0)} > ${amt.toFixed(0)}${crit?' crit':''}${tg.hp<=0?' (dead)':''}`);if(sim.log.length>14)sim.log.shift()}
+  }
+  sim.pend=[];
+}
+function cast(u,tg){
+  const m=STAR.spell**(u.stars-1),ad=ev(u,'ad'),ap=ev(u,'ap');
+  if(u.dmg==='attack')hit(u,tg,ad*3*m,'physical',false,'spell');
+  else if(u.dmg==='magic')hit(u,tg,ap*2.5*m,'magic',false,'spell');
+  else{hit(u,tg,ad*1.5*m,'physical',false,'spell');hit(u,tg,ap*1.25*m,'magic',false,'spell')}
+}
+function step(){
+  sim.t+=DT;sim.pend=[];
+  /* ranged units pick targets before melee units move (patch 15.4 rule) */
+  for(const u of [...sim.units.filter(u=>u.range>1),...sim.units.filter(u=>u.range<=1)])if(u.hp>0&&(!u.target||u.target.hp<=0))u.target=nearest(u);
+  /* random acting order each tick (seeded) so no unit gets a permanent first move */
+  const order=[...sim.units];
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(sim.rng()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
+  for(const u of order){
+    if(u.hp<=0)continue;
+    if(!u.target||u.target.hp<=0)u.target=nearest(u);
+    const tg=u.target;if(!tg)continue;
+    if(u.busy>0){u.busy-=DT;continue}
+    if(u.mmax)u.mana=Math.min(u.mmax,u.mana+ev(u,'mps')*DT);
+    if(u.moving>0){u.moving-=DT;continue}
+    if(dist(u,tg)<=u.range){
+      if(u.mmax&&u.mana>=u.mmax){cast(u,tg);u.mana=0;u.busy=CASTTIME;u.cast=sim.t}
+      else if(sim.t>=u.nextAtk){
+        hit(u,tg,ev(u,'ad'),'physical',true,'auto');
+        if(u.mmax)u.mana=Math.min(u.mmax,u.mana+ev(u,'mpa'));
+        u.nextAtk=Math.max(u.nextAtk,sim.t-DT)+1/Math.min(AS_CAP,ev(u,'as'));u.hit=sim.t;
+      }
+    }else{
+      const n=pathStep(u,tg);
+      if(n){u.fx=u.c;u.fy=u.r;u.c=n[0];u.r=n[1];u.moving=MOVE}
+    }
+  }
+  applyPending();
+  sim.units=sim.units.filter(u=>u.hp>0);
+  const a=sim.units.filter(u=>u.team==='A').length,b=sim.units.filter(u=>u.team==='B').length;
+  if(!a||!b||sim.t>=TIMEOUT){
+    sim.done=true;sim.a=a;sim.b=b;
+    if(!sim.mc){
+      running=false;$('go').textContent='Start fight';
+      const w=!a&&!b?'Draw':!a?'Red team wins':!b?'Blue team wins':'Timeout: no winner';
+      st.textContent=`${w} after ${sim.t.toFixed(1)}s (seed ${sim.seed}). Survivors: blue ${a}, red ${b}.`;
+      totals.textContent='Damage dealt / taken\n'+sim.all.map(u=>`${cap(u.role)} ${u.team==='A'?'blue':'red'} ${u.stars}-star: ${u.dealt.toFixed(0)} / ${u.taken.toFixed(0)}${u.hp>0?'':' (dead)'}`).join('\n');
+    }
+  }
+}
+
+/* drawing */
+function hexPath(x,y,s){ctx.beginPath();for(let i=0;i<6;i++){const a=Math.PI/180*(60*i-30);ctx.lineTo(x+s*Math.cos(a),y+s*Math.sin(a))}ctx.closePath()}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const[x,y]=center(c,r);hexPath(x,y,S-1.5);
+    ctx.fillStyle=r<4?css('--hexB'):css('--hex');ctx.fill();
+    ctx.strokeStyle=css('--line');ctx.lineWidth=1;ctx.stroke();
+  }
+  /* axis labels: columns 1-7 left to right; rows a-d counting out from the centre on each side */
+  ctx.fillStyle=css('--mute');ctx.font='600 12px "Trebuchet MS",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let c=0;c<COLS;c++){ctx.fillText(c+1,center(c,0)[0],PY-8);ctx.fillText(c+1,center(c,7)[0],H-10)}
+  for(let r=0;r<ROWS;r++)ctx.fillText(rowName(r),PX-14,center(0,r)[1]);
+  const us=sim?sim.units:layout.map((l,i)=>mk(l,i));
+  for(const u of us){
+    let[x,y]=center(u.c,u.r);
+    if(sim&&u.moving>0){const[fx,fy]=center(u.fx,u.fy),p=1-u.moving/MOVE;x=fx+(x-fx)*p;y=fy+(y-fy)*p}
+    const col=css(u.team==='A'?'--a':'--b'),flash=sim&&sim.t-u.hit<0.12;
+    ctx.beginPath();ctx.arc(x,y,S*0.58,0,7);ctx.fillStyle=col;ctx.globalAlpha=flash?1:0.88;ctx.fill();ctx.globalAlpha=1;
+    ctx.lineWidth=u.id===sel?4:flash?3:1.5;ctx.strokeStyle=css('--ink');ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='700 15px "Trebuchet MS",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(u.label,x,y+1);
+    if(u.stars>1)ctx.fillText('★'.repeat(u.stars-1),x,y+S*0.95);
+    const bw=S*1.1,f=Math.max(0,u.hp/u.maxhp);
+    ctx.fillStyle=css('--line');ctx.fillRect(x-bw/2,y-S*0.82,bw,4);
+    ctx.fillStyle=col;ctx.fillRect(x-bw/2,y-S*0.82,bw*f,4);
+    if(u.mmax){ctx.fillStyle=css('--line');ctx.fillRect(x-bw/2,y-S*0.82+5,bw,3);ctx.fillStyle='#3aa7e6';ctx.fillRect(x-bw/2,y-S*0.82+5,bw*(u.mana/u.mmax),3)}
+    ctx.beginPath();ctx.arc(x+S*0.5,y+S*0.45,5,0,7);ctx.fillStyle=DMGCOL[u.dmg];ctx.fill();ctx.lineWidth=1;ctx.strokeStyle=css('--ink');ctx.stroke();
+    if(sim&&sim.t-u.cast<0.4){ctx.beginPath();ctx.arc(x,y,S*0.75,0,7);ctx.lineWidth=3;ctx.strokeStyle=DMGCOL[u.dmg];ctx.stroke()}
+  }
+}
+
+/* inspector: editable before the fight, live read-out during it */
+function renderInsp(){
+  const l=layout[sel];
+  if(!l){insp.innerHTML='<p class="hint">Click a placed unit to inspect or edit it. Click an empty hex to place a unit. Right-click a unit to remove it.</p>';return}
+  const head=`<h2>${cap(l.role)} · ${l.team==='A'?'Blue':'Red'} · ${cap(l.dmg)} · ${rowName(l.r)}${l.c+1}</h2>`;
+  if(sim){insp.innerHTML=head+'<p id="live"></p>';return}
+  const R={...ROLES[l.role],...l.o};
+  insp.innerHTML=head+'<div class="fields">'+FIELDS.map(([k,n])=>`<label>${n}<input type="number" step="any" data-k="${k}" value="${R[k]}"></label>`).join('')+
+   `<label>Stars<select data-k="stars">${[1,2,3].map(s=>`<option${(l.stars||1)===s?' selected':''}>${s}</option>`).join('')}</select></label></div><button id="rm">Remove unit</button>`;
+}
+insp.addEventListener('input',e=>{
+  const k=e.target.dataset&&e.target.dataset.k,l=layout[sel],v=Number(e.target.value);
+  if(!k||!l||sim||e.target.value===''||isNaN(v))return;
+  if(k==='stars')l.stars=v;else l.o[k]=v;
+});
+insp.addEventListener('click',e=>{if(e.target.id==='rm'&&!sim){layout.splice(sel,1);sel=-1;renderInsp()}});
+function live(){
+  const el=$('live');if(!el||sel<0)return;
+  const u=sim.all[sel];if(!u)return;
+  el.textContent=`${u.hp>0?Math.round(u.hp):0} / ${Math.round(u.maxhp)} HP · mana ${Math.round(u.mana)} / ${u.mmax} · AD ${ev(u,'ad').toFixed(0)} · attack speed ${Math.min(AS_CAP,ev(u,'as')).toFixed(2)} · armor ${ev(u,'armor').toFixed(0)} · MR ${ev(u,'mr').toFixed(0)} · dealt ${u.dealt.toFixed(0)} · taken ${u.taken.toFixed(0)}${u.hp>0?'':' · defeated'}`;
+}
+function loop(ts){
+  if(running){
+    acc+=Math.min(0.1,(ts-last)/1000)*Number($('spd').value);
+    while(acc>=DT&&running){step();acc-=DT}
+    if(running)st.textContent=`Fighting: ${sim.t.toFixed(1)}s (seed ${sim.seed})`;
+  }
+  last=ts;
+  if(sim){live();logEl.textContent=sim.log.join('\n')||'No hits yet.'}
+  draw();requestAnimationFrame(loop);
+}
+
+/* controls */
+function setPressed(grp,attr,val){document.querySelectorAll(`#${grp} button`).forEach(b=>b.setAttribute('aria-pressed',b.dataset[attr]===val))}
+$('teamGrp').onclick=e=>{const b=e.target.closest('button');if(b){team=b.dataset.team;setPressed('teamGrp','team',team)}};
+$('typeGrp').onclick=e=>{const b=e.target.closest('button');if(b){type=b.dataset.type;setPressed('typeGrp','type',type);dmg=DEFDMG[type];setPressed('dmgGrp','dmg',dmg)}};
+$('dmgGrp').onclick=e=>{const b=e.target.closest('button');if(b){dmg=b.dataset.dmg;setPressed('dmgGrp','dmg',dmg)}};
+cv.addEventListener('click',e=>{
+  const rc=cv.getBoundingClientRect(),cell=cellAt((e.clientX-rc.left)*W/rc.width,(e.clientY-rc.top)*H/rc.height);
+  if(!cell)return;
+  const i=layout.findIndex(l=>l.c===cell[0]&&l.r===cell[1]);
+  if(i>=0){sel=i;renderInsp();return}
+  if(sim)return;
+  layout.push({team,role:type,dmg,stars:1,o:{},c:cell[0],r:cell[1]});
+  st.textContent=`${layout.filter(l=>l.team==='A').length} blue, ${layout.filter(l=>l.team==='B').length} red placed.`;
+});
+/* right-click (or long-press) removes the unit under the pointer while editing */
+cv.addEventListener('contextmenu',e=>{
+  e.preventDefault();
+  if(sim)return;
+  const rc=cv.getBoundingClientRect(),cell=cellAt((e.clientX-rc.left)*W/rc.width,(e.clientY-rc.top)*H/rc.height);
+  if(!cell)return;
+  const i=layout.findIndex(l=>l.c===cell[0]&&l.r===cell[1]);
+  if(i<0)return;
+  layout.splice(i,1);
+  if(sel===i)sel=-1;else if(sel>i)sel--;
+  renderInsp();
+  st.textContent=`${layout.filter(l=>l.team==='A').length} blue, ${layout.filter(l=>l.team==='B').length} red placed.`;
+});
+function ready(){if(!layout.some(l=>l.team==='A')||!layout.some(l=>l.team==='B')){st.textContent='Place at least one unit on each team first.';return false}return true}
+function resetSim(msg){sim=null;running=false;$('go').textContent='Start fight';totals.textContent='';logEl.textContent='Start a fight to see hits.';st.textContent=msg||'';renderInsp()}
+$('go').onclick=()=>{
+  if(running){running=false;$('go').textContent='Resume';return}
+  if(sim&&sim.done){sim=null;totals.textContent=''}
+  if(!sim){if(!ready())return;sim=newSim(seedVal(),false);renderInsp()}
+  running=true;$('go').textContent='Pause';
+};
+$('reset').onclick=()=>resetSim('Board reset.');
+$('clear').onclick=()=>{layout=[];sel=-1;resetSim('Board cleared.')};
+$('mc').onclick=()=>{
+  if(!ready())return;
+  const saved=sim,N=200,seed=seedVal(),m=rng(seed);let A=0,B=0,D=0,T=0,sa=0,sb=0;
+  for(let i=0;i<N;i++){
+    sim=newSim(Math.floor(m()*4294967296),true);while(!sim.done)step();
+    if(sim.a&&!sim.b)A++;else if(sim.b&&!sim.a)B++;else D++;
+    T+=sim.t;sa+=sim.a;sb+=sim.b;
+  }
+  sim=saved;
+  st.textContent=`${N} fights (seed ${seed}): blue ${(A/N*100).toFixed(1)}%, red ${(B/N*100).toFixed(1)}%, draws or timeouts ${(D/N*100).toFixed(1)}%. Average length ${(T/N).toFixed(1)}s. Average survivors: blue ${(sa/N).toFixed(1)}, red ${(sb/N).toFixed(1)}.`;
+};
+$('rand').onclick=()=>{
+  layout=[];sel=-1;resetSim('Random 6v6 placed. Start the fight when ready.');
+  const ks=['tank','fighter','fighter','marksman','marksman','caster','caster','specialist'];
+  for(const[t,r0]of[['B',0],['A',4]]){
+    const cells=[];for(let r=r0;r<r0+4;r++)for(let c=0;c<COLS;c++)cells.push([c,r]);
+    cells.sort(()=>Math.random()-0.5);
+    for(let i=0;i<6;i++){const rr=ks[Math.floor(Math.random()*ks.length)];layout.push({team:t,role:rr,dmg:DEFDMG[rr],stars:1,o:{},c:cells[i][0],r:cells[i][1]})}
+  }
+};
+$('rand').click();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
