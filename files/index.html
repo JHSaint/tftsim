@@ -31,6 +31,17 @@ canvas{display:block;width:100%;max-width:100%;height:auto;background:var(--pane
 section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px}
 .fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:10px}
 .fields label{font-size:13px;color:var(--mute);display:block}
+textarea{display:block;width:100%;margin:8px 0;font:12px/1.5 ui-monospace,Consolas,monospace;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px}
+summary{cursor:pointer;margin:6px 0}
+#bSearch{width:170px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px;max-height:360px;overflow:auto;padding:2px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border:2px solid var(--line);border-radius:8px;font-size:11px;line-height:1.2;min-width:0}
+.tile:hover{background:var(--hexB)}
+.tile .nm{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .rl{color:var(--mute);font-size:10px}
+.pic{position:relative;width:44px;height:44px;border-radius:50%;overflow:hidden;background:var(--hexB);display:grid;place-items:center;font-weight:700;font-size:13px}
+.pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 20%}
+.cg{grid-column:1/-1;color:var(--mute);font-size:12px;margin-top:4px}
 pre{margin:0;white-space:pre-wrap;font:12px/1.5 ui-monospace,Consolas,monospace;max-height:220px;overflow:auto}
 </style>
 </head>
@@ -42,6 +53,7 @@ pre{margin:0;white-space:pre-wrap;font:12px/1.5 ui-monospace,Consolas,monospace;
   <div class="grp" id="teamGrp"><button data-team="A" aria-pressed="true">Blue team</button><button data-team="B" aria-pressed="false">Red team</button></div>
   <div class="grp" id="dmgGrp" aria-label="Damage type"><button data-dmg="attack" aria-pressed="true">Attack</button><button data-dmg="magic" aria-pressed="false">Magic</button><button data-dmg="hybrid" aria-pressed="false">Hybrid</button></div>
   <div class="grp" id="typeGrp" aria-label="Team role"><button data-type="tank" aria-pressed="false">Tank</button><button data-type="fighter" aria-pressed="true">Fighter</button><button data-type="marksman" aria-pressed="false">Marksman</button><button data-type="caster" aria-pressed="false">Caster</button><button data-type="specialist" aria-pressed="false">Specialist</button></div>
+  <label>Unit <select id="unitSel"><option value="">Generic role</option></select></label>
 </div>
 <div class="bar">
   <button class="go" id="go">Start fight</button>
@@ -56,6 +68,32 @@ pre{margin:0;white-space:pre-wrap;font:12px/1.5 ui-monospace,Consolas,monospace;
 <canvas id="cv" tabindex="0" aria-label="Hexagonal TFT board, 7 columns by 8 rows"></canvas>
 <p id="status" role="status" aria-live="polite"></p>
 <p class="legend">Dot colour is damage type (orange attack, purple magic, teal hybrid). Blue bar under health is mana. The same seed always replays the same fight.</p>
+<section id="builder">
+  <h2>Team builder</h2>
+  <p class="hint">Click a unit to add it to the <span id="bTeam">Blue</span> side, or right-click to add it to the other side. Melee units go to the front rows and ranged units to the back.</p>
+  <div class="bar">
+    <input id="bSearch" type="search" placeholder="Search units" aria-label="Search units">
+    <select id="bRole" aria-label="Filter by team role"><option value="">All roles</option><option value="tank">Tank</option><option value="fighter">Fighter</option><option value="marksman">Marksman</option><option value="caster">Caster</option><option value="specialist">Specialist</option></select>
+    <button id="bClearA">Clear blue</button><button id="bClearB">Clear red</button>
+  </div>
+  <p id="bEmpty" class="hint" hidden>No units loaded. Import a unit CSV below.</p>
+  <div id="bGrid" class="tiles"></div>
+</section>
+<section id="roster">
+  <h2>Unit roster (CSV)</h2>
+  <p class="hint">Import a CSV with one row per unit and its 1-star base stats, then pick the unit in the Unit menu before placing it. Columns you leave out use the role defaults.</p>
+  <div class="bar"><label>CSV file <input id="csvFile" type="file" accept=".csv,text/csv,text/plain"></label></div>
+  <details><summary>Paste CSV text or see the expected columns</summary>
+    <p class="hint">Headers are case-insensitive. Accepted: name, role (for example Attack Tank), damage_type, hp, ad, ap, attack_speed, armor, magic_resist, range, crit_chance, crit_damage, damage_amp, durability, mana, mana_per_attack, mana_per_second. Write percentages as 25, not 0.25. Optional extras: cost (1 to 5, groups the builder) and image (an https URL or a data:image URI).</p>
+    <textarea id="csvText" rows="7" aria-label="CSV text">name,role,damage_type,hp,ad,ap,attack_speed,armor,magic_resist,range,crit_chance,crit_damage,mana
+Brawler,Attack Tank,,1300,40,100,0.55,60,60,1,25,140,100
+Duelist,Attack Fighter,,850,60,100,0.7,40,40,1,25,140,80
+Archer,Attack Marksman,,500,55,100,0.8,25,25,4,25,140,60
+Mage,Magic Caster,,480,30,100,0.7,20,20,4,25,140,50</textarea>
+    <div class="bar"><button id="csvPaste">Import pasted CSV</button></div>
+  </details>
+  <p id="impStatus" class="hint" role="status" aria-live="polite">No units imported yet.</p>
+</section>
 <section id="insp" aria-live="polite"></section>
 <section><h2>Combat log</h2><pre id="log">Start a fight to see hits.</pre><pre id="totals"></pre></section>
 </main>
@@ -72,16 +110,17 @@ const ROLES={
   specialist:{hp:600,ad:50,ap:100,as:0.75,armor:30,mr:30,range:3,crit:25,critDmg:140,amp:0,dur:0,mana:0,mpa:0,mps:0,label:'S'}
 };
 const FIELDS=[['hp','Health'],['ad','Attack damage'],['ap','Ability power'],['as','Attack speed'],['armor','Armor'],['mr','Magic resist'],['range','Range (hexes)'],['crit','Crit chance %'],['critDmg','Crit damage %'],['amp','Damage amp %'],['dur','Durability %'],['mana','Max mana'],['mpa','Mana per attack'],['mps','Mana per second']];
-const STAR={hp:1.8,ad:1.5,spell:1.5}; /* per star above 1; unverified */
+const STAR={hp:1.8,ad:1.8,spell:1.5}; /* hp and ad x1.8 per star per MetaBot's Set 18 stats; spell scaling unverified */
 const DEFDMG={tank:'attack',fighter:'attack',marksman:'attack',caster:'magic',specialist:'hybrid'};
 const DMGCOL={attack:'#e8913a',magic:'#a46bd6',hybrid:'#2fb5a3'};
 const FIGHTER_AS={2:0.05,3:0.10,4:0.20,5:0.30,6:0.30};
 const $=id=>document.getElementById(id);
 const cv=$('cv'),ctx=cv.getContext('2d'),st=$('status'),insp=$('insp'),logEl=$('log'),totals=$('totals');
 cv.width=W;cv.height=H;
-let layout=[],sim=null,team='A',type='fighter',dmg='attack',running=false,last=0,acc=0,sel=-1;
+let roster=Object.create(null),layout=[],sim=null,team='A',type='fighter',dmg='attack',running=false,last=0,acc=0,sel=-1;
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const stage=()=>Number($('stg').value),seedVal=()=>Math.floor(Number($('seed').value))||1,cap=s=>s[0].toUpperCase()+s.slice(1);
+const esc=s=>String(s).split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;').split('"').join('&quot;');
 function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 
 /* hex grid, odd-r offset */
@@ -96,7 +135,7 @@ function cellAt(px,py){let b=null,bd=1e9;for(let r=0;r<ROWS;r++)for(let c=0;c<CO
 function mk(l,id){
   const b={...ROLES[l.role],...l.o},k=(l.stars||1)-1;
   b.hp*=STAR.hp**k;b.ad*=STAR.ad**k;
-  return{id,team:l.team,role:l.role,dmg:l.dmg,label:ROLES[l.role].label,stars:l.stars||1,b,
+  return{id,team:l.team,role:l.role,dmg:l.dmg,name:l.unit||cap(l.role),label:l.unit?l.unit.slice(0,2):ROLES[l.role].label,stars:l.stars||1,b,
     mods:l.role==='fighter'?[{s:'as',p:FIGHTER_AS[stage()]}]:[],
     hp:b.hp,maxhp:b.hp,mana:0,mmax:b.mana,range:b.range,c:l.c,r:l.r,fx:l.c,fy:l.r,
     moving:0,busy:0,nextAtk:0,target:null,hit:-9,cast:-9,dealt:0,taken:0};
@@ -189,7 +228,7 @@ function step(){
       running=false;$('go').textContent='Start fight';
       const w=!a&&!b?'Draw':!a?'Red team wins':!b?'Blue team wins':'Timeout: no winner';
       st.textContent=`${w} after ${sim.t.toFixed(1)}s (seed ${sim.seed}). Survivors: blue ${a}, red ${b}.`;
-      totals.textContent='Damage dealt / taken\n'+sim.all.map(u=>`${cap(u.role)} ${u.team==='A'?'blue':'red'} ${u.stars}-star: ${u.dealt.toFixed(0)} / ${u.taken.toFixed(0)}${u.hp>0?'':' (dead)'}`).join('\n');
+      totals.textContent='Damage dealt / taken\n'+sim.all.map(u=>`${u.name} ${u.team==='A'?'blue':'red'} ${u.stars}-star: ${u.dealt.toFixed(0)} / ${u.taken.toFixed(0)}${u.hp>0?'':' (dead)'}`).join('\n');
     }
   }
 }
@@ -230,7 +269,7 @@ function draw(){
 function renderInsp(){
   const l=layout[sel];
   if(!l){insp.innerHTML='<p class="hint">Click a placed unit to inspect or edit it. Click an empty hex to place a unit. Right-click a unit to remove it.</p>';return}
-  const head=`<h2>${cap(l.role)} · ${l.team==='A'?'Blue':'Red'} · ${cap(l.dmg)} · ${rowName(l.r)}${l.c+1}</h2>`;
+  const head=`<h2>${esc(l.unit?l.unit+' ('+cap(l.role)+')':cap(l.role))} · ${l.team==='A'?'Blue':'Red'} · ${cap(l.dmg)} · ${rowName(l.r)}${l.c+1}</h2>`;
   if(sim){insp.innerHTML=head+'<p id="live"></p>';return}
   const R={...ROLES[l.role],...l.o};
   insp.innerHTML=head+'<div class="fields">'+FIELDS.map(([k,n])=>`<label>${n}<input type="number" step="any" data-k="${k}" value="${R[k]}"></label>`).join('')+
@@ -260,16 +299,16 @@ function loop(ts){
 
 /* controls */
 function setPressed(grp,attr,val){document.querySelectorAll(`#${grp} button`).forEach(b=>b.setAttribute('aria-pressed',b.dataset[attr]===val))}
-$('teamGrp').onclick=e=>{const b=e.target.closest('button');if(b){team=b.dataset.team;setPressed('teamGrp','team',team)}};
-$('typeGrp').onclick=e=>{const b=e.target.closest('button');if(b){type=b.dataset.type;setPressed('typeGrp','type',type);dmg=DEFDMG[type];setPressed('dmgGrp','dmg',dmg)}};
-$('dmgGrp').onclick=e=>{const b=e.target.closest('button');if(b){dmg=b.dataset.dmg;setPressed('dmgGrp','dmg',dmg)}};
+$('teamGrp').onclick=e=>{const b=e.target.closest('button');if(b){team=b.dataset.team;setPressed('teamGrp','team',team);$('bTeam').textContent=team==='A'?'Blue':'Red'}};
+$('typeGrp').onclick=e=>{const b=e.target.closest('button');if(b){$('unitSel').value='';type=b.dataset.type;setPressed('typeGrp','type',type);dmg=DEFDMG[type];setPressed('dmgGrp','dmg',dmg)}};
+$('dmgGrp').onclick=e=>{const b=e.target.closest('button');if(b){$('unitSel').value='';dmg=b.dataset.dmg;setPressed('dmgGrp','dmg',dmg)}};
 cv.addEventListener('click',e=>{
   const rc=cv.getBoundingClientRect(),cell=cellAt((e.clientX-rc.left)*W/rc.width,(e.clientY-rc.top)*H/rc.height);
   if(!cell)return;
   const i=layout.findIndex(l=>l.c===cell[0]&&l.r===cell[1]);
   if(i>=0){sel=i;renderInsp();return}
   if(sim)return;
-  layout.push({team,role:type,dmg,stars:1,o:{},c:cell[0],r:cell[1]});
+  layout.push(newUnit(cell[0],cell[1]));
   st.textContent=`${layout.filter(l=>l.team==='A').length} blue, ${layout.filter(l=>l.team==='B').length} red placed.`;
 });
 /* right-click (or long-press) removes the unit under the pointer while editing */
@@ -285,6 +324,116 @@ cv.addEventListener('contextmenu',e=>{
   renderInsp();
   st.textContent=`${layout.filter(l=>l.team==='A').length} blue, ${layout.filter(l=>l.team==='B').length} red placed.`;
 });
+/* CSV import: one row per unit with its 1-star base stats */
+const NL=String.fromCharCode(10),CR=String.fromCharCode(13),TAB=String.fromCharCode(9);
+const norm=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');
+const safeImg=s=>s&&(s.slice(0,8).toLowerCase()==='https://'||s.slice(0,11).toLowerCase()==='data:image/')?s:'';
+const ALIAS={name:['name','unit','unitname','champion','championname','champ'],role:['role','teamrole','unitrole'],dmg:['damagetype','dmgtype','dmg'],
+ hp:['hp','health','maxhealth','maxhp'],ad:['ad','attackdamage','atk','basead'],ap:['ap','abilitypower'],as:['as','attackspeed','aspd'],armor:['armor'],mr:['mr','magicresist','magicresistance'],range:['range','attackrange'],
+ crit:['crit','critchance','critrate'],critDmg:['critdmg','critdamage'],amp:['amp','damageamp'],dur:['dur','durability'],mana:['mana','maxmana','manamax'],mpa:['mpa','manaperattack'],mps:['mps','manapersecond','manaregen'],cost:['cost','gold','goldcost'],img:['image','imageurl','img','icon','portrait','picture']};
+const COLMAP=Object.create(null);for(const k in ALIAS)for(const a of ALIAS[k])COLMAP[a]=k;
+function parseCSV(t){
+  if(t.charCodeAt(0)===0xFEFF)t=t.slice(1);
+  const first=t.split(NL)[0],delim=[',',';',TAB].map(d=>[d,first.split(d).length]).sort((a,b)=>b[1]-a[1])[0][0];
+  const rows=[];let row=[],f='',q=false;
+  for(let i=0;i<t.length;i++){
+    const ch=t[i];
+    if(q){if(ch==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=ch}
+    else if(ch==='"')q=true;
+    else if(ch===delim){row.push(f);f=''}
+    else if(ch===NL||ch===CR){if(ch===CR&&t[i+1]===NL)i++;row.push(f);rows.push(row);row=[];f=''}
+    else f+=ch;
+  }
+  if(f!==''||row.length){row.push(f);rows.push(row)}
+  return rows.filter(r=>r.some(c=>c.trim()!==''));
+}
+/* role cell may hold a damage type, a team role, or both ("Attack Tank"); assassin maps to fighter per patch 15.4 */
+function parseRole(s){
+  let d=null,r=null;
+  for(const x of String(s).toLowerCase().split(/[^a-z]+/).filter(Boolean)){
+    if(x==='attack'||x==='ad')d='attack';else if(x==='magic'||x==='ap')d='magic';else if(x==='hybrid')d='hybrid';
+    else if(x==='assassin')r='fighter';else if(Object.keys(ROLES).includes(x))r=x;
+  }
+  return{r,d};
+}
+function impMsg(m){$('impStatus').textContent=m}
+function importCSV(text){
+  const rows=parseCSV(text),warn=[];
+  if(rows.length<2){impMsg('No data rows found. The first row must be the column headers.');return}
+  const cols=rows[0].map(h=>COLMAP[norm(h)]||null),ignored=rows[0].filter((h,i)=>!cols[i]&&h.trim());
+  if(!cols.includes('name')){impMsg('No name column found. Accepted headers: name, unit, champion.');return}
+  const next=Object.create(null);let skipped=0;
+  rows.slice(1).forEach((row,i)=>{
+    const rec={};cols.forEach((k,j)=>{if(k&&row[j]!==undefined&&row[j].trim()!=='')rec[k]=row[j].trim()});
+    if(!rec.name){skipped++;return}
+    if(next[rec.name])warn.push(`${rec.name} appears twice, using the last row`);
+    const pr=rec.role?parseRole(rec.role):{r:null,d:null};
+    if(rec.role&&!pr.r)warn.push(`${rec.name}: no team role found in "${rec.role}", using fighter`);
+    const role=pr.r||'fighter',d=rec.dmg?parseRole(rec.dmg).d:null,o={};
+    for(const[k]of FIELDS){
+      if(rec[k]===undefined)continue;
+      const v=Number(rec[k].replace('%','').replace(',','.'));
+      if(isNaN(v)||(['hp','as','range'].includes(k)&&v<=0))warn.push(`${rec.name}: ${k} "${rec[k]}" is not usable, using the role default`);
+      else o[k]=v;
+    }
+    next[rec.name]={role,dmg:d||pr.d||DEFDMG[role],o,cost:Math.round(Number(rec.cost))||0,img:safeImg(rec.img)};
+  });
+  roster=next;fillRoster();renderBuilder();
+  const n=Object.keys(next).length;
+  impMsg(`Imported ${n} unit${n===1?'':'s'}${skipped?`, skipped ${skipped} row${skipped===1?'':'s'} with no name`:''}.${ignored.length?` Ignored columns: ${ignored.join(', ')}.`:''}${warn.length?' Notes: '+warn.slice(0,5).join('; ')+(warn.length>5?`; and ${warn.length-5} more.`:'.'):''}`);
+}
+function fillRoster(){
+  $('unitSel').innerHTML='<option value="">Generic role</option>'+Object.keys(roster).map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+}
+function newUnit(c,r){
+  const n=$('unitSel').value,u=n&&roster[n];
+  return u?{team,role:u.role,dmg:u.dmg,stars:1,o:{...u.o},unit:n,c,r}:{team,role:type,dmg,stars:1,o:{},c,r};
+}
+$('unitSel').onchange=()=>{const u=roster[$('unitSel').value];if(u){type=u.role;dmg=u.dmg;setPressed('typeGrp','type',type);setPressed('dmgGrp','dmg',dmg)}};
+$('csvFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{importCSV(await f.text())}catch(err){impMsg('Could not read that file.')}e.target.value=''};
+$('csvPaste').onclick=()=>importCSV($('csvText').value);
+/* team builder: one tile per imported unit; click adds it to the board */
+const COSTCOL={1:'#9aa1b2',2:'#3fae5a',3:'#3a8fe0',4:'#b05ad6',5:'#e0a52a'};
+const SIDE_ROWS={A:[4,5,6,7],B:[3,2,1,0]},COL_ORDER=[3,2,4,1,5,0,6];
+function autoPlace(tm,range){
+  const taken=new Set(layout.map(l=>l.c+','+l.r)),rows=range>=2?[...SIDE_ROWS[tm]].reverse():SIDE_ROWS[tm];
+  for(const r of rows)for(const c of COL_ORDER)if(!taken.has(c+','+r))return[c,r];
+  return null;
+}
+function addFromBuilder(name,tm){
+  const u=roster[name],who=tm==='A'?'Blue':'Red';
+  if(!u)return;
+  if(sim){st.textContent='Reset the board before adding units.';return}
+  const spot=autoPlace(tm,{...ROLES[u.role],...u.o}.range);
+  if(!spot){st.textContent=`The ${who.toLowerCase()} side is full.`;return}
+  layout.push({team:tm,role:u.role,dmg:u.dmg,stars:1,o:{...u.o},unit:name,c:spot[0],r:spot[1]});
+  st.textContent=`Added ${name} to ${who} (${layout.filter(l=>l.team===tm).length} of 28 hexes used).`;
+}
+function renderBuilder(){
+  const g=$('bGrid'),q=$('bSearch').value.trim().toLowerCase(),rf=$('bRole').value;
+  g.textContent='';
+  $('bEmpty').hidden=Object.keys(roster).length>0;
+  const names=Object.keys(roster).filter(n=>(!q||n.toLowerCase().includes(q))&&(!rf||roster[n].role===rf)).sort((a,b)=>(roster[a].cost||0)-(roster[b].cost||0)||a.localeCompare(b));
+  const anyCost=names.some(n=>roster[n].cost);let lastCost=-1;
+  for(const n of names){
+    const u=roster[n],R={...ROLES[u.role],...u.o};
+    if(anyCost&&u.cost!==lastCost){lastCost=u.cost;const h=document.createElement('div');h.className='cg';h.textContent=u.cost?`${u.cost} gold`:'No cost listed';g.appendChild(h)}
+    const b=document.createElement('button'),pic=document.createElement('span'),ph=document.createElement('span'),nm=document.createElement('span'),rl=document.createElement('span');
+    b.className='tile';b.type='button';b.dataset.unit=n;
+    b.title=[n,`${cap(u.dmg)} ${cap(u.role)}`,`HP ${R.hp}  AD ${R.ad}  AS ${R.as}`,`Armor ${R.armor}  MR ${R.mr}  Range ${R.range}  Mana ${R.mana}`].join(NL);
+    if(COSTCOL[u.cost])b.style.borderColor=COSTCOL[u.cost];
+    pic.className='pic';ph.textContent=n.slice(0,2);pic.appendChild(ph);
+    if(u.img){const im=document.createElement('img');im.alt='';im.loading='lazy';im.src=u.img;pic.appendChild(im)}
+    nm.className='nm';nm.textContent=n;rl.className='rl';rl.textContent=cap(u.role);
+    b.append(pic,nm,rl);g.appendChild(b);
+  }
+}
+$('bGrid').addEventListener('click',e=>{const b=e.target.closest('.tile');if(b)addFromBuilder(b.dataset.unit,team)});
+$('bGrid').addEventListener('contextmenu',e=>{const b=e.target.closest('.tile');if(!b)return;e.preventDefault();addFromBuilder(b.dataset.unit,team==='A'?'B':'A')});
+$('bGrid').addEventListener('error',e=>{if(e.target.tagName==='IMG')e.target.style.display='none'},true);
+$('bSearch').oninput=renderBuilder;$('bRole').onchange=renderBuilder;
+const clearSide=tm=>{if(sim)return;layout=layout.filter(l=>l.team!==tm);sel=-1;renderInsp();st.textContent=`${tm==='A'?'Blue':'Red'} side cleared.`};
+$('bClearA').onclick=()=>clearSide('A');$('bClearB').onclick=()=>clearSide('B');
 function ready(){if(!layout.some(l=>l.team==='A')||!layout.some(l=>l.team==='B')){st.textContent='Place at least one unit on each team first.';return false}return true}
 function resetSim(msg){sim=null;running=false;$('go').textContent='Start fight';totals.textContent='';logEl.textContent='Start a fight to see hits.';st.textContent=msg||'';renderInsp()}
 $('go').onclick=()=>{
@@ -315,6 +464,7 @@ $('rand').onclick=()=>{
     for(let i=0;i<6;i++){const rr=ks[Math.floor(Math.random()*ks.length)];layout.push({team:t,role:rr,dmg:DEFDMG[rr],stars:1,o:{},c:cells[i][0],r:cells[i][1]})}
   }
 };
+importCSV($('csvText').value);
 $('rand').click();
 requestAnimationFrame(loop);
 </script>
