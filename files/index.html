@@ -25,12 +25,27 @@ input[type=number]{width:100%;padding:4px 6px}
 .grp button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 button.go{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--a);outline-offset:2px}
-canvas{display:block;width:100%;max-width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;touch-action:manipulation}
+canvas{display:block;width:100%;max-width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;touch-action:none}
 #status{margin:10px 0 0;min-height:1.4em}
 .legend,.hint{color:var(--mute);font-size:13px;margin:6px 0}
 section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px}
 .fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:10px}
 .fields label{font-size:13px;color:var(--mute);display:block}
+textarea{display:block;width:100%;margin:8px 0;font:12px/1.5 ui-monospace,Consolas,monospace;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px}
+summary{cursor:pointer;margin:6px 0}
+#bSearch{width:170px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px;max-height:360px;overflow:auto;padding:2px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border:2px solid var(--line);border-radius:8px;font-size:11px;line-height:1.2;min-width:0}
+.tile:hover{background:var(--hexB)}
+.tile .nm{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .rl{color:var(--mute);font-size:10px}
+.pic{position:relative;width:44px;height:44px;border-radius:50%;overflow:hidden;background:var(--hexB);display:grid;place-items:center;font-weight:700;font-size:13px}
+.pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 20%}
+.cg{grid-column:1/-1;color:var(--mute);font-size:12px;margin-top:4px}
+.tile{user-select:none;-webkit-user-select:none;cursor:grab}
+.pic img{pointer-events:none;-webkit-user-drag:none}
+.ghost{position:fixed;z-index:50;width:48px;height:48px;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);background:var(--hexB) center/cover no-repeat;border:3px solid var(--a);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.ghost[hidden]{display:none}
 pre{margin:0;white-space:pre-wrap;font:12px/1.5 ui-monospace,Consolas,monospace;max-height:220px;overflow:auto}
 </style>
 </head>
@@ -41,7 +56,8 @@ pre{margin:0;white-space:pre-wrap;font:12px/1.5 ui-monospace,Consolas,monospace;
 <div class="bar" role="toolbar" aria-label="Placement">
   <div class="grp" id="teamGrp"><button data-team="A" aria-pressed="true">Blue team</button><button data-team="B" aria-pressed="false">Red team</button></div>
   <div class="grp" id="dmgGrp" aria-label="Damage type"><button data-dmg="attack" aria-pressed="true">Attack</button><button data-dmg="magic" aria-pressed="false">Magic</button><button data-dmg="hybrid" aria-pressed="false">Hybrid</button></div>
-  <div class="grp" id="typeGrp" aria-label="Team role"><button data-type="tank" aria-pressed="false">Tank</button><button data-type="fighter" aria-pressed="true">Fighter</button><button data-type="marksman" aria-pressed="false">Marksman</button><button data-type="caster" aria-pressed="false">Caster</button><button data-type="specialist" aria-pressed="false">Specialist</button></div>
+  <div class="grp" id="typeGrp" aria-label="Team role"><button data-type="tank" aria-pressed="false">Tank</button><button data-type="fighter" aria-pressed="true">Fighter</button><button data-type="assassin" aria-pressed="false">Assassin</button><button data-type="marksman" aria-pressed="false">Marksman</button><button data-type="caster" aria-pressed="false">Caster</button><button data-type="specialist" aria-pressed="false">Specialist</button></div>
+  <label>Unit <select id="unitSel"><option value="">Generic role</option></select></label>
 </div>
 <div class="bar">
   <button class="go" id="go">Start fight</button>
@@ -54,8 +70,35 @@ pre{margin:0;white-space:pre-wrap;font:12px/1.5 ui-monospace,Consolas,monospace;
   <label>Seed <input id="seed" type="number" value="1"></label>
 </div>
 <canvas id="cv" tabindex="0" aria-label="Hexagonal TFT board, 7 columns by 8 rows"></canvas>
+<div id="ghost" class="ghost" hidden></div>
 <p id="status" role="status" aria-live="polite"></p>
 <p class="legend">Dot colour is damage type (orange attack, purple magic, teal hybrid). Blue bar under health is mana. The same seed always replays the same fight.</p>
+<section id="builder">
+  <h2>Team builder</h2>
+  <p class="hint">Drag a unit onto the board (the half you drop it on decides its team), or click to add it to the <span id="bTeam">Blue</span> side and right-click for the other side. Clicked units go to the front rows if melee and the back rows if ranged. Drag units already on the board to move or swap them.</p>
+  <div class="bar">
+    <input id="bSearch" type="search" placeholder="Search units" aria-label="Search units">
+    <select id="bRole" aria-label="Filter by team role"><option value="">All roles</option><option value="tank">Tank</option><option value="fighter">Fighter</option><option value="assassin">Assassin</option><option value="marksman">Marksman</option><option value="caster">Caster</option><option value="specialist">Specialist</option></select>
+    <button id="bClearA">Clear blue</button><button id="bClearB">Clear red</button>
+  </div>
+  <p id="bEmpty" class="hint" hidden>No units loaded. Import a unit CSV below.</p>
+  <div id="bGrid" class="tiles"></div>
+</section>
+<section id="roster">
+  <h2>Unit roster (CSV)</h2>
+  <p class="hint">Import a CSV with one row per unit and its 1-star base stats, then pick the unit in the Unit menu before placing it. Columns you leave out use the role defaults.</p>
+  <div class="bar"><label>CSV file <input id="csvFile" type="file" accept=".csv,text/csv,text/plain"></label></div>
+  <details><summary>Paste CSV text or see the expected columns</summary>
+    <p class="hint">Headers are case-insensitive. Accepted: name, role (for example Attack Tank), damage_type, hp, ad, ap, attack_speed, armor, magic_resist, range, crit_chance, crit_damage, damage_amp, durability, mana, mana_per_attack, mana_per_second. Write percentages as 25, not 0.25. Optional extras: cost (1 to 5, groups the builder) and image (an https URL or a data:image URI).</p>
+    <textarea id="csvText" rows="7" aria-label="CSV text">name,role,damage_type,hp,ad,ap,attack_speed,armor,magic_resist,range,crit_chance,crit_damage,mana
+Brawler,Attack Tank,,1300,40,100,0.55,60,60,1,25,140,100
+Duelist,Attack Fighter,,850,60,100,0.7,40,40,1,25,140,80
+Archer,Attack Marksman,,500,55,100,0.8,25,25,4,25,140,60
+Mage,Magic Caster,,480,30,100,0.7,20,20,4,25,140,50</textarea>
+    <div class="bar"><button id="csvPaste">Import pasted CSV</button></div>
+  </details>
+  <p id="impStatus" class="hint" role="status" aria-live="polite">No units imported yet.</p>
+</section>
 <section id="insp" aria-live="polite"></section>
 <section><h2>Combat log</h2><pre id="log">Start a fight to see hits.</pre><pre id="totals"></pre></section>
 </main>
@@ -67,21 +110,23 @@ const MOVE=0.55,DT=0.025,TIMEOUT=90,CASTTIME=0.5,AS_CAP=5;
 const ROLES={
   tank:{hp:1300,ad:40,ap:100,as:0.55,armor:60,mr:60,range:1,crit:25,critDmg:140,amp:0,dur:0,mana:100,mpa:5,mps:0,label:'T'},
   fighter:{hp:850,ad:60,ap:100,as:0.7,armor:40,mr:40,range:1,crit:25,critDmg:140,amp:0,dur:0,mana:80,mpa:10,mps:0,label:'F'},
+  assassin:{hp:700,ad:60,ap:100,as:0.75,armor:30,mr:30,range:1,crit:25,critDmg:140,amp:0,dur:0,mana:70,mpa:10,mps:0,label:'A'},
   marksman:{hp:500,ad:55,ap:100,as:0.8,armor:25,mr:25,range:4,crit:25,critDmg:140,amp:0,dur:0,mana:60,mpa:10,mps:0,label:'M'},
   caster:{hp:480,ad:30,ap:100,as:0.7,armor:20,mr:20,range:4,crit:25,critDmg:140,amp:0,dur:0,mana:50,mpa:7,mps:2,label:'C'},
   specialist:{hp:600,ad:50,ap:100,as:0.75,armor:30,mr:30,range:3,crit:25,critDmg:140,amp:0,dur:0,mana:0,mpa:0,mps:0,label:'S'}
 };
 const FIELDS=[['hp','Health'],['ad','Attack damage'],['ap','Ability power'],['as','Attack speed'],['armor','Armor'],['mr','Magic resist'],['range','Range (hexes)'],['crit','Crit chance %'],['critDmg','Crit damage %'],['amp','Damage amp %'],['dur','Durability %'],['mana','Max mana'],['mpa','Mana per attack'],['mps','Mana per second']];
-const STAR={hp:1.8,ad:1.5,spell:1.5}; /* per star above 1; unverified */
-const DEFDMG={tank:'attack',fighter:'attack',marksman:'attack',caster:'magic',specialist:'hybrid'};
+const STAR={hp:1.8,ad:1.8,spell:1.5}; /* hp and ad x1.8 per star per MetaBot's Set 18 stats; spell scaling unverified */
+const DEFDMG={tank:'attack',fighter:'attack',assassin:'attack',marksman:'attack',caster:'magic',specialist:'hybrid'};
 const DMGCOL={attack:'#e8913a',magic:'#a46bd6',hybrid:'#2fb5a3'};
 const FIGHTER_AS={2:0.05,3:0.10,4:0.20,5:0.30,6:0.30};
 const $=id=>document.getElementById(id);
 const cv=$('cv'),ctx=cv.getContext('2d'),st=$('status'),insp=$('insp'),logEl=$('log'),totals=$('totals');
 cv.width=W;cv.height=H;
-let layout=[],sim=null,team='A',type='fighter',dmg='attack',running=false,last=0,acc=0,sel=-1;
+let roster=Object.create(null),layout=[],sim=null,team='A',type='fighter',dmg='attack',running=false,last=0,acc=0,sel=-1;
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const stage=()=>Number($('stg').value),seedVal=()=>Math.floor(Number($('seed').value))||1,cap=s=>s[0].toUpperCase()+s.slice(1);
+const esc=s=>String(s).split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;').split('"').join('&quot;');
 function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 
 /* hex grid, odd-r offset */
@@ -96,7 +141,7 @@ function cellAt(px,py){let b=null,bd=1e9;for(let r=0;r<ROWS;r++)for(let c=0;c<CO
 function mk(l,id){
   const b={...ROLES[l.role],...l.o},k=(l.stars||1)-1;
   b.hp*=STAR.hp**k;b.ad*=STAR.ad**k;
-  return{id,team:l.team,role:l.role,dmg:l.dmg,label:ROLES[l.role].label,stars:l.stars||1,b,
+  return{id,team:l.team,role:l.role,dmg:l.dmg,name:l.unit||cap(l.role),img:l.img||'',label:l.unit?l.unit.slice(0,2):ROLES[l.role].label,stars:l.stars||1,b,
     mods:l.role==='fighter'?[{s:'as',p:FIGHTER_AS[stage()]}]:[],
     hp:b.hp,maxhp:b.hp,mana:0,mmax:b.mana,range:b.range,c:l.c,r:l.r,fx:l.c,fy:l.r,
     moving:0,busy:0,nextAtk:0,target:null,hit:-9,cast:-9,dealt:0,taken:0};
@@ -110,7 +155,7 @@ function newSim(seed,mc){const all=layout.map((l,i)=>mk(l,i));return{t:0,done:fa
 function nearest(u){
   /* lowest hex distance wins, tanks win ties on distance, any remaining tie is broken at random (seeded) */
   let best=[],bd=1e9;
-  for(const e of sim.units){if(e.team===u.team||e.hp<=0)continue;const d=dist(u,e)*10+(e.role==='tank'?0:1);if(d<bd){bd=d;best=[e]}else if(d===bd)best.push(e)}
+  for(const e of sim.units){if(e.team===u.team||e.hp<=0)continue;const d=dist(u,e)*10+(e.role==='tank'?0:e.role==='assassin'?2:1);if(d<bd){bd=d;best=[e]}else if(d===bd)best.push(e)}
   return best.length?best[Math.floor(sim.rng()*best.length)]:null;
 }
 function pathStep(u,tg){
@@ -189,13 +234,20 @@ function step(){
       running=false;$('go').textContent='Start fight';
       const w=!a&&!b?'Draw':!a?'Red team wins':!b?'Blue team wins':'Timeout: no winner';
       st.textContent=`${w} after ${sim.t.toFixed(1)}s (seed ${sim.seed}). Survivors: blue ${a}, red ${b}.`;
-      totals.textContent='Damage dealt / taken\n'+sim.all.map(u=>`${cap(u.role)} ${u.team==='A'?'blue':'red'} ${u.stars}-star: ${u.dealt.toFixed(0)} / ${u.taken.toFixed(0)}${u.hp>0?'':' (dead)'}`).join('\n');
+      totals.textContent='Damage dealt / taken\n'+sim.all.map(u=>`${u.name} ${u.team==='A'?'blue':'red'} ${u.stars}-star: ${u.dealt.toFixed(0)} / ${u.taken.toFixed(0)}${u.hp>0?'':' (dead)'}`).join('\n');
     }
   }
 }
 
 /* drawing */
 function hexPath(x,y,s){ctx.beginPath();for(let i=0;i<6;i++){const a=Math.PI/180*(60*i-30);ctx.lineTo(x+s*Math.cos(a),y+s*Math.sin(a))}ctx.closePath()}
+const imgs=new Map();
+function getImg(url){
+  if(!url)return null;
+  let e=imgs.get(url);
+  if(!e){e={img:new Image(),ok:false};e.img.onload=()=>{e.ok=true};e.img.onerror=()=>{e.ok=false};e.img.src=url;imgs.set(url,e)}
+  return e.ok?e.img:null;
+}
 function draw(){
   ctx.clearRect(0,0,W,H);
   for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
@@ -209,13 +261,23 @@ function draw(){
   for(let r=0;r<ROWS;r++)ctx.fillText(rowName(r),PX-14,center(0,r)[1]);
   const us=sim?sim.units:layout.map((l,i)=>mk(l,i));
   for(const u of us){
+    if(drag&&drag.moved&&drag.kind==='board'&&u.id===drag.idx)continue;
     let[x,y]=center(u.c,u.r);
     if(sim&&u.moving>0){const[fx,fy]=center(u.fx,u.fy),p=1-u.moving/MOVE;x=fx+(x-fx)*p;y=fy+(y-fy)*p}
     const col=css(u.team==='A'?'--a':'--b'),flash=sim&&sim.t-u.hit<0.12;
-    ctx.beginPath();ctx.arc(x,y,S*0.58,0,7);ctx.fillStyle=col;ctx.globalAlpha=flash?1:0.88;ctx.fill();ctx.globalAlpha=1;
-    ctx.lineWidth=u.id===sel?4:flash?3:1.5;ctx.strokeStyle=css('--ink');ctx.stroke();
+    const R0=S*0.58,pic=getImg(u.img);
+    ctx.beginPath();ctx.arc(x,y,R0,0,7);ctx.fillStyle=col;ctx.globalAlpha=flash?1:0.88;ctx.fill();ctx.globalAlpha=1;
+    if(pic&&pic.naturalWidth){
+      /* cover-fit the portrait inside the circle, biased towards the top so faces stay in view */
+      ctx.save();ctx.beginPath();ctx.arc(x,y,R0,0,7);ctx.clip();
+      const sc=Math.max(2*R0/pic.naturalWidth,2*R0/pic.naturalHeight),dw=pic.naturalWidth*sc,dh=pic.naturalHeight*sc;
+      ctx.drawImage(pic,x-dw/2,y-R0-(dh-2*R0)*0.2,dw,dh);ctx.restore();
+    }
+    const shown=!!(pic&&pic.naturalWidth);
+    ctx.beginPath();ctx.arc(x,y,R0,0,7);ctx.lineWidth=shown?3:1.5;ctx.strokeStyle=shown?col:css('--ink');ctx.stroke();
+    if(u.id===sel||flash){ctx.lineWidth=u.id===sel?4:3;ctx.strokeStyle=css('--ink');ctx.stroke()}
     ctx.fillStyle='#fff';ctx.font='700 15px "Trebuchet MS",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(u.label,x,y+1);
+    if(!shown)ctx.fillText(u.label,x,y+1);
     if(u.stars>1)ctx.fillText('★'.repeat(u.stars-1),x,y+S*0.95);
     const bw=S*1.1,f=Math.max(0,u.hp/u.maxhp);
     ctx.fillStyle=css('--line');ctx.fillRect(x-bw/2,y-S*0.82,bw,4);
@@ -224,13 +286,17 @@ function draw(){
     ctx.beginPath();ctx.arc(x+S*0.5,y+S*0.45,5,0,7);ctx.fillStyle=DMGCOL[u.dmg];ctx.fill();ctx.lineWidth=1;ctx.strokeStyle=css('--ink');ctx.stroke();
     if(sim&&sim.t-u.cast<0.4){ctx.beginPath();ctx.arc(x,y,S*0.75,0,7);ctx.lineWidth=3;ctx.strokeStyle=DMGCOL[u.dmg];ctx.stroke()}
   }
+  if(drag&&drag.moved){
+    const c=cellOf({clientX:drag.x,clientY:drag.y});
+    if(c){const[hx,hy]=center(c[0],c[1]);hexPath(hx,hy,S-1.5);ctx.lineWidth=3;ctx.strokeStyle=css('--a');ctx.stroke()}
+  }
 }
 
 /* inspector: editable before the fight, live read-out during it */
 function renderInsp(){
   const l=layout[sel];
   if(!l){insp.innerHTML='<p class="hint">Click a placed unit to inspect or edit it. Click an empty hex to place a unit. Right-click a unit to remove it.</p>';return}
-  const head=`<h2>${cap(l.role)} · ${l.team==='A'?'Blue':'Red'} · ${cap(l.dmg)} · ${rowName(l.r)}${l.c+1}</h2>`;
+  const head=`<h2>${esc(l.unit?l.unit+' ('+cap(l.role)+')':cap(l.role))} · ${l.team==='A'?'Blue':'Red'} · ${cap(l.dmg)} · ${rowName(l.r)}${l.c+1}</h2>`;
   if(sim){insp.innerHTML=head+'<p id="live"></p>';return}
   const R={...ROLES[l.role],...l.o};
   insp.innerHTML=head+'<div class="fields">'+FIELDS.map(([k,n])=>`<label>${n}<input type="number" step="any" data-k="${k}" value="${R[k]}"></label>`).join('')+
@@ -260,16 +326,73 @@ function loop(ts){
 
 /* controls */
 function setPressed(grp,attr,val){document.querySelectorAll(`#${grp} button`).forEach(b=>b.setAttribute('aria-pressed',b.dataset[attr]===val))}
-$('teamGrp').onclick=e=>{const b=e.target.closest('button');if(b){team=b.dataset.team;setPressed('teamGrp','team',team)}};
-$('typeGrp').onclick=e=>{const b=e.target.closest('button');if(b){type=b.dataset.type;setPressed('typeGrp','type',type);dmg=DEFDMG[type];setPressed('dmgGrp','dmg',dmg)}};
-$('dmgGrp').onclick=e=>{const b=e.target.closest('button');if(b){dmg=b.dataset.dmg;setPressed('dmgGrp','dmg',dmg)}};
+$('teamGrp').onclick=e=>{const b=e.target.closest('button');if(b){team=b.dataset.team;setPressed('teamGrp','team',team);$('bTeam').textContent=team==='A'?'Blue':'Red'}};
+$('typeGrp').onclick=e=>{const b=e.target.closest('button');if(b){$('unitSel').value='';type=b.dataset.type;setPressed('typeGrp','type',type);dmg=DEFDMG[type];setPressed('dmgGrp','dmg',dmg)}};
+$('dmgGrp').onclick=e=>{const b=e.target.closest('button');if(b){$('unitSel').value='';dmg=b.dataset.dmg;setPressed('dmgGrp','dmg',dmg)}};
+/* drag and drop: pointer events so mouse, pen and (on the board) touch all work */
+let drag=null,suppress=false;
+const ghost=$('ghost');
+const cellOf=e=>{const rc=cv.getBoundingClientRect();return cellAt((e.clientX-rc.left)*W/rc.width,(e.clientY-rc.top)*H/rc.height)};
+const unitAt=cell=>cell?layout.findIndex(l=>l.c===cell[0]&&l.r===cell[1]):-1;
+cv.addEventListener('pointerdown',e=>{
+  if(e.button!==0||sim)return;
+  const i=unitAt(cellOf(e));
+  if(i<0)return;
+  drag={kind:'board',idx:i,x0:e.clientX,y0:e.clientY,x:e.clientX,y:e.clientY,moved:false};
+  try{cv.setPointerCapture(e.pointerId)}catch(err){}
+});
+$('bGrid').addEventListener('pointerdown',e=>{
+  const b=e.target.closest('.tile');
+  if(!b||e.button!==0||e.pointerType==='touch'||sim)return;
+  drag={kind:'builder',name:b.dataset.unit,x0:e.clientX,y0:e.clientY,x:e.clientX,y:e.clientY,moved:false};
+  try{b.setPointerCapture(e.pointerId)}catch(err){}
+});
+function ghostFor(){
+  const u=drag.kind==='board'?layout[drag.idx]:roster[drag.name];
+  const label=drag.kind==='board'?(u.unit?u.unit.slice(0,2):ROLES[u.role].label):drag.name.slice(0,2);
+  ghost.textContent=u.img?'':label;
+  ghost.style.backgroundImage=u.img?'url('+JSON.stringify(u.img)+')':'none';
+  ghost.hidden=false;
+}
+window.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  drag.x=e.clientX;drag.y=e.clientY;
+  if(!drag.moved&&Math.hypot(drag.x-drag.x0,drag.y-drag.y0)>6){drag.moved=true;ghostFor()}
+  if(drag.moved){
+    ghost.style.left=drag.x+'px';ghost.style.top=drag.y+'px';
+    const c=cellOf(e),tm=drag.kind==='board'?layout[drag.idx].team:(c?(c[1]<4?'B':'A'):team);
+    ghost.style.borderColor=css(tm==='A'?'--a':'--b');
+  }
+});
+function endDrag(e,cancel){
+  const d=drag;drag=null;ghost.hidden=true;
+  if(!d||!d.moved)return;
+  suppress=true;setTimeout(()=>{suppress=false},0);
+  if(cancel)return;
+  const cell=cellOf(e);
+  if(!cell){st.textContent='Dropped outside the board, nothing changed.';return}
+  const j=unitAt(cell);
+  if(d.kind==='board'){
+    const u=layout[d.idx];
+    if(j===d.idx)return;
+    if(j>=0){const o=layout[j];[u.c,o.c]=[o.c,u.c];[u.r,o.r]=[o.r,u.r];st.textContent=`Swapped ${u.unit||cap(u.role)} and ${o.unit||cap(o.role)}.`}
+    else{u.c=cell[0];u.r=cell[1];st.textContent=`Moved ${u.unit||cap(u.role)} to ${rowName(cell[1])}${cell[0]+1}.`}
+    if(sel===d.idx)renderInsp();
+  }else{
+    if(j>=0){st.textContent='That hex is taken. Drop the unit on an empty hex.';return}
+    placeUnit(d.name,cell[1]<4?'B':'A',cell[0],cell[1]);
+  }
+}
+window.addEventListener('pointerup',e=>endDrag(e,false));
+window.addEventListener('pointercancel',e=>endDrag(e,true));
 cv.addEventListener('click',e=>{
-  const rc=cv.getBoundingClientRect(),cell=cellAt((e.clientX-rc.left)*W/rc.width,(e.clientY-rc.top)*H/rc.height);
+  if(suppress)return;
+  const cell=cellOf(e);
   if(!cell)return;
-  const i=layout.findIndex(l=>l.c===cell[0]&&l.r===cell[1]);
+  const i=unitAt(cell);
   if(i>=0){sel=i;renderInsp();return}
   if(sim)return;
-  layout.push({team,role:type,dmg,stars:1,o:{},c:cell[0],r:cell[1]});
+  layout.push(newUnit(cell[0],cell[1]));
   st.textContent=`${layout.filter(l=>l.team==='A').length} blue, ${layout.filter(l=>l.team==='B').length} red placed.`;
 });
 /* right-click (or long-press) removes the unit under the pointer while editing */
@@ -285,6 +408,123 @@ cv.addEventListener('contextmenu',e=>{
   renderInsp();
   st.textContent=`${layout.filter(l=>l.team==='A').length} blue, ${layout.filter(l=>l.team==='B').length} red placed.`;
 });
+/* CSV import: one row per unit with its 1-star base stats */
+const NL=String.fromCharCode(10),CR=String.fromCharCode(13),TAB=String.fromCharCode(9);
+const norm=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');
+const safeImg=s=>s&&(s.slice(0,8).toLowerCase()==='https://'||s.slice(0,11).toLowerCase()==='data:image/')?s:'';
+const ALIAS={name:['name','unit','unitname','champion','championname','champ'],role:['role','teamrole','unitrole'],dmg:['damagetype','dmgtype','dmg'],
+ hp:['hp','health','maxhealth','maxhp'],ad:['ad','attackdamage','atk','basead'],ap:['ap','abilitypower'],as:['as','attackspeed','aspd'],armor:['armor'],mr:['mr','magicresist','magicresistance'],range:['range','attackrange'],
+ crit:['crit','critchance','critrate'],critDmg:['critdmg','critdamage'],amp:['amp','damageamp'],dur:['dur','durability'],mana:['mana','maxmana','manamax'],mpa:['mpa','manaperattack'],mps:['mps','manapersecond','manaregen'],cost:['cost','gold','goldcost'],img:['image','imageurl','img','icon','portrait','picture']};
+const COLMAP=Object.create(null);for(const k in ALIAS)for(const a of ALIAS[k])COLMAP[a]=k;
+function parseCSV(t){
+  if(t.charCodeAt(0)===0xFEFF)t=t.slice(1);
+  const first=t.split(NL)[0],delim=[',',';',TAB].map(d=>[d,first.split(d).length]).sort((a,b)=>b[1]-a[1])[0][0];
+  const rows=[];let row=[],f='',q=false;
+  for(let i=0;i<t.length;i++){
+    const ch=t[i];
+    if(q){if(ch==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=ch}
+    else if(ch==='"')q=true;
+    else if(ch===delim){row.push(f);f=''}
+    else if(ch===NL||ch===CR){if(ch===CR&&t[i+1]===NL)i++;row.push(f);rows.push(row);row=[];f=''}
+    else f+=ch;
+  }
+  if(f!==''||row.length){row.push(f);rows.push(row)}
+  return rows.filter(r=>r.some(c=>c.trim()!==''));
+}
+/* role cell may hold a damage type, a team role, or both ("Attack Tank"); the common typo "assasin" is accepted */
+function parseRole(s){
+  let d=null,r=null;
+  for(const x of String(s).toLowerCase().split(/[^a-z]+/).filter(Boolean)){
+    if(x==='attack'||x==='ad'||x==='physical')d='attack';else if(x==='magic'||x==='ap'||x==='magical')d='magic';else if(x==='hybrid'||x==='both')d='hybrid';
+    else if(x==='assasin'||x==='assassin')r='assassin';else if(Object.keys(ROLES).includes(x))r=x;
+  }
+  return{r,d};
+}
+function impMsg(m){$('impStatus').textContent=m}
+function importCSV(text){
+  const rows=parseCSV(text),warn=[];
+  if(rows.length<2){impMsg('No data rows found. The first row must be the column headers.');return}
+  const cols=rows[0].map(h=>COLMAP[norm(h)]||null),ignored=rows[0].filter((h,i)=>!cols[i]&&h.trim());
+  if(!cols.includes('name')){impMsg('No name column found. Accepted headers: name, unit, champion.');return}
+  const next=Object.create(null);let skipped=0;
+  rows.slice(1).forEach((row,i)=>{
+    const rec={};cols.forEach((k,j)=>{if(k&&row[j]!==undefined&&row[j].trim()!=='')rec[k]=row[j].trim()});
+    if(!rec.name){skipped++;return}
+    if(next[rec.name])warn.push(`${rec.name} appears twice, using the last row`);
+    const pr=rec.role?parseRole(rec.role):{r:null,d:null};
+    if(rec.role&&!pr.r)warn.push(`${rec.name}: no team role found in "${rec.role}", using fighter`);
+    const role=pr.r||'fighter',d=rec.dmg?parseRole(rec.dmg).d:null,o={};
+    for(const[k]of FIELDS){
+      if(rec[k]===undefined)continue;
+      const v=Number(rec[k].replace('%','').replace(',','.'));
+      if(isNaN(v)||(['hp','as','range'].includes(k)&&v<=0))warn.push(`${rec.name}: ${k} "${rec[k]}" is not usable, using the role default`);
+      else o[k]=v;
+    }
+    next[rec.name]={role,dmg:d||pr.d||DEFDMG[role],o,cost:Math.round(Number(rec.cost))||0,img:safeImg(rec.img)};
+  });
+  roster=next;fillRoster();renderBuilder();
+  const n=Object.keys(next).length;
+  impMsg(`Imported ${n} unit${n===1?'':'s'}${skipped?`, skipped ${skipped} row${skipped===1?'':'s'} with no name`:''}.${ignored.length?` Ignored columns: ${ignored.join(', ')}.`:''}${warn.length?' Notes: '+warn.slice(0,5).join('; ')+(warn.length>5?`; and ${warn.length-5} more.`:'.'):''}`);
+}
+function fillRoster(){
+  $('unitSel').innerHTML='<option value="">Generic role</option>'+Object.keys(roster).map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+}
+function newUnit(c,r){
+  const n=$('unitSel').value,u=n&&roster[n];
+  return u?{team,role:u.role,dmg:u.dmg,stars:1,o:{...u.o},unit:n,img:u.img,c,r}:{team,role:type,dmg,stars:1,o:{},c,r};
+}
+$('unitSel').onchange=()=>{const u=roster[$('unitSel').value];if(u){type=u.role;dmg=u.dmg;setPressed('typeGrp','type',type);setPressed('dmgGrp','dmg',dmg)}};
+$('csvFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{importCSV(await f.text())}catch(err){impMsg('Could not read that file.')}e.target.value=''};
+$('csvPaste').onclick=()=>importCSV($('csvText').value);
+/* team builder: one tile per imported unit; click adds it to the board */
+const COSTCOL={1:'#9aa1b2',2:'#3fae5a',3:'#3a8fe0',4:'#b05ad6',5:'#e0a52a'};
+const SIDE_ROWS={A:[4,5,6,7],B:[3,2,1,0]},COL_ORDER=[3,2,4,1,5,0,6];
+function autoPlace(tm,range){
+  const taken=new Set(layout.map(l=>l.c+','+l.r)),rows=range>=2?[...SIDE_ROWS[tm]].reverse():SIDE_ROWS[tm];
+  for(const r of rows)for(const c of COL_ORDER)if(!taken.has(c+','+r))return[c,r];
+  return null;
+}
+function placeUnit(name,tm,c,r){
+  const u=roster[name];
+  if(!u)return false;
+  if(sim){st.textContent='Reset the board before adding units.';return false}
+  layout.push({team:tm,role:u.role,dmg:u.dmg,stars:1,o:{...u.o},unit:name,img:u.img,c,r});
+  st.textContent=`Added ${name} to ${tm==='A'?'Blue':'Red'} at ${rowName(r)}${c+1} (${layout.filter(l=>l.team===tm).length} of 28 hexes used).`;
+  return true;
+}
+function addFromBuilder(name,tm){
+  const u=roster[name];
+  if(!u)return;
+  if(sim){st.textContent='Reset the board before adding units.';return}
+  const spot=autoPlace(tm,{...ROLES[u.role],...u.o}.range);
+  if(!spot){st.textContent=`The ${tm==='A'?'blue':'red'} side is full.`;return}
+  placeUnit(name,tm,spot[0],spot[1]);
+}
+function renderBuilder(){
+  const g=$('bGrid'),q=$('bSearch').value.trim().toLowerCase(),rf=$('bRole').value;
+  g.textContent='';
+  $('bEmpty').hidden=Object.keys(roster).length>0;
+  const names=Object.keys(roster).filter(n=>(!q||n.toLowerCase().includes(q))&&(!rf||roster[n].role===rf)).sort((a,b)=>(roster[a].cost||0)-(roster[b].cost||0)||a.localeCompare(b));
+  const anyCost=names.some(n=>roster[n].cost);let lastCost=-1;
+  for(const n of names){
+    const u=roster[n],R={...ROLES[u.role],...u.o};
+    if(anyCost&&u.cost!==lastCost){lastCost=u.cost;const h=document.createElement('div');h.className='cg';h.textContent=u.cost?`${u.cost} gold`:'No cost listed';g.appendChild(h)}
+    const b=document.createElement('button'),pic=document.createElement('span'),ph=document.createElement('span'),nm=document.createElement('span'),rl=document.createElement('span');
+    b.className='tile';b.type='button';b.dataset.unit=n;
+    b.title=[n,`${cap(u.dmg)} ${cap(u.role)}`,`HP ${R.hp}  AD ${R.ad}  AS ${R.as}`,`Armor ${R.armor}  MR ${R.mr}  Range ${R.range}  Mana ${R.mana}`].join(NL);
+    if(COSTCOL[u.cost])b.style.borderColor=COSTCOL[u.cost];
+    pic.className='pic';ph.textContent=n.slice(0,2);pic.appendChild(ph);
+    if(u.img){const im=document.createElement('img');im.alt='';im.draggable=false;im.loading='lazy';im.src=u.img;pic.appendChild(im)}
+    nm.className='nm';nm.textContent=n;rl.className='rl';rl.textContent=cap(u.role);
+    b.append(pic,nm,rl);g.appendChild(b);
+  }
+}
+$('bGrid').addEventListener('click',e=>{if(suppress)return;const b=e.target.closest('.tile');if(b)addFromBuilder(b.dataset.unit,team)});
+$('bGrid').addEventListener('contextmenu',e=>{const b=e.target.closest('.tile');if(!b)return;e.preventDefault();addFromBuilder(b.dataset.unit,team==='A'?'B':'A')});
+$('bGrid').addEventListener('error',e=>{if(e.target.tagName==='IMG')e.target.style.display='none'},true);
+$('bSearch').oninput=renderBuilder;$('bRole').onchange=renderBuilder;
+const clearSide=tm=>{if(sim)return;layout=layout.filter(l=>l.team!==tm);sel=-1;renderInsp();st.textContent=`${tm==='A'?'Blue':'Red'} side cleared.`};
+$('bClearA').onclick=()=>clearSide('A');$('bClearB').onclick=()=>clearSide('B');
 function ready(){if(!layout.some(l=>l.team==='A')||!layout.some(l=>l.team==='B')){st.textContent='Place at least one unit on each team first.';return false}return true}
 function resetSim(msg){sim=null;running=false;$('go').textContent='Start fight';totals.textContent='';logEl.textContent='Start a fight to see hits.';st.textContent=msg||'';renderInsp()}
 $('go').onclick=()=>{
@@ -312,9 +552,16 @@ $('rand').onclick=()=>{
   for(const[t,r0]of[['B',0],['A',4]]){
     const cells=[];for(let r=r0;r<r0+4;r++)for(let c=0;c<COLS;c++)cells.push([c,r]);
     cells.sort(()=>Math.random()-0.5);
-    for(let i=0;i<6;i++){const rr=ks[Math.floor(Math.random()*ks.length)];layout.push({team:t,role:rr,dmg:DEFDMG[rr],stars:1,o:{},c:cells[i][0],r:cells[i][1]})}
+    for(let i=0;i<6;i++){
+      const names=Object.keys(roster);
+      if(names.length){const n=names[Math.floor(Math.random()*names.length)],u=roster[n];layout.push({team:t,role:u.role,dmg:u.dmg,stars:1,o:{...u.o},unit:n,img:u.img,c:cells[i][0],r:cells[i][1]})}
+      else{const rr=ks[Math.floor(Math.random()*ks.length)];layout.push({team:t,role:rr,dmg:DEFDMG[rr],stars:1,o:{},c:cells[i][0],r:cells[i][1]})}
+    }
   }
 };
+importCSV($('csvText').value);
+/* when served over http (for example GitHub Pages) load units-set18.csv from the same folder; otherwise keep the example units */
+try{fetch('units-set18.csv').then(r=>r.ok?r.text():Promise.reject()).then(t=>{importCSV(t);$('rand').click()}).catch(()=>{})}catch(err){}
 $('rand').click();
 requestAnimationFrame(loop);
 </script>
