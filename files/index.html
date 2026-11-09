@@ -11,7 +11,20 @@
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Trebuchet MS","Segoe UI",system-ui,sans-serif}
-main{max-width:720px;margin:0 auto;padding:16px}
+main{max-width:1240px;margin:0 auto;padding:16px}
+header.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:8px 16px;margin-bottom:12px}
+header.top .sub{margin:0}
+header.top .bar{margin-bottom:0}
+.bar label{display:inline-flex;align-items:center;gap:6px}
+.top3{display:grid;grid-template-columns:minmax(190px,250px) minmax(0,500px) minmax(260px,1fr);grid-template-areas:"log board unit";gap:12px;margin-top:10px;align-items:start}
+.top3>.boardcol{grid-area:board;min-width:0}
+.top3>#logPanel{grid-area:log}
+.top3>#inspPanel{grid-area:unit}
+.top3>details.panel{margin-top:0;padding:10px;min-width:0}
+#logPanel pre{font-size:11px;max-height:420px}
+.placing{color:var(--mute);font-size:13px}
+@media (max-width:1059px){.top3{grid-template-columns:minmax(0,500px) minmax(0,1fr);grid-template-areas:"board unit" "log log"}}
+@media (max-width:699px){.top3{grid-template-columns:minmax(0,1fr);grid-template-areas:"board" "unit" "log"}}
 h1{font:600 22px/1.2 Georgia,"Times New Roman",serif;margin:0 0 4px}
 h2{font:600 16px/1.3 Georgia,serif;margin:0 0 8px}
 p.sub{margin:0 0 14px;color:var(--mute)}
@@ -28,7 +41,26 @@ button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visib
 canvas{display:block;width:100%;max-width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;touch-action:none}
 #status{margin:10px 0 0;min-height:1.4em}
 .legend,.hint{color:var(--mute);font-size:13px;margin:6px 0}
-section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px}
+details.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px}
+details.panel>summary{list-style:none;display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;border-radius:6px}
+details.panel>summary::-webkit-details-marker{display:none}
+details.panel>summary::before{content:"\25B8";color:var(--mute);font-size:13px;width:1em}
+details.panel[open]>summary::before{content:"\25BE"}
+details.panel>summary h2{margin:0}
+details.panel[open]>summary{margin-bottom:10px}
+details.panel>summary:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.meterrow{display:grid;grid-template-columns:46px 1fr auto;gap:8px;align-items:center;font-size:12px;margin:4px 0}
+.meterrow b{font-weight:600;min-width:80px;text-align:right}
+.meter{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--a)}
+.team-B .meter i{background:var(--b)}
+.meter.mana i{background:#3aa7e6}
+table.stats{width:100%;border-collapse:collapse;font-size:12px;margin:6px 0}
+table.stats th,table.stats td{padding:2px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+table.stats th:first-child,table.stats td:first-child{text-align:left;white-space:normal}
+table.stats th{color:var(--mute);font-weight:600}
+table.stats td.bonus{color:var(--a)}
+h3.sub2{font:600 14px/1.3 Georgia,serif;margin:12px 0 4px}
 .fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:10px}
 .fields label{font-size:13px;color:var(--mute);display:block}
 textarea{display:block;width:100%;margin:8px 0;font:12px/1.5 ui-monospace,Consolas,monospace;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px}
@@ -46,18 +78,27 @@ summary{cursor:pointer;margin:6px 0}
 .pic img{pointer-events:none;-webkit-user-drag:none}
 .ghost{position:fixed;z-index:50;width:48px;height:48px;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);background:var(--hexB) center/cover no-repeat;border:3px solid var(--a);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 4px 14px rgba(0,0,0,.35)}
 .ghost[hidden]{display:none}
+input[type=checkbox]{width:auto;margin-right:6px}
+.tcols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:520px){.tcols{grid-template-columns:1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:12px;background:var(--panel)}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip.dim{color:var(--mute);border-style:dashed}
 pre{margin:0;white-space:pre-wrap;font:12px/1.5 ui-monospace,Consolas,monospace;max-height:220px;overflow:auto}
 </style>
 </head>
 <body>
 <main>
-<h1>TFT fight simulator</h1>
-<p class="sub">Place units, click one to edit its stats, then start the fight or run 200 seeded fights.</p>
+<header class="top">
+  <div><h1>TFT fight simulator</h1><p class="sub">Place units, click one to edit its stats, then start the fight or run 200 seeded fights.</p></div>
+  <div class="bar"><button id="collapseAll">Collapse all panels</button><button id="expandAll">Expand all panels</button></div>
+</header>
 <div class="bar" role="toolbar" aria-label="Placement">
-  <div class="grp" id="teamGrp"><button data-team="A" aria-pressed="true">Blue team</button><button data-team="B" aria-pressed="false">Red team</button></div>
-  <div class="grp" id="dmgGrp" aria-label="Damage type"><button data-dmg="attack" aria-pressed="true">Attack</button><button data-dmg="magic" aria-pressed="false">Magic</button><button data-dmg="hybrid" aria-pressed="false">Hybrid</button></div>
-  <div class="grp" id="typeGrp" aria-label="Team role"><button data-type="tank" aria-pressed="false">Tank</button><button data-type="fighter" aria-pressed="true">Fighter</button><button data-type="assassin" aria-pressed="false">Assassin</button><button data-type="marksman" aria-pressed="false">Marksman</button><button data-type="caster" aria-pressed="false">Caster</button><button data-type="specialist" aria-pressed="false">Specialist</button></div>
   <label>Unit <select id="unitSel"><option value="">Generic role</option></select></label>
+  <label>Role <select id="roleSel"><option value="tank">Tank</option><option value="fighter" selected>Fighter</option><option value="assassin">Assassin</option><option value="marksman">Marksman</option><option value="caster">Caster</option><option value="specialist">Specialist</option></select></label>
+  <label>Damage <select id="dmgSel"><option value="attack" selected>Attack</option><option value="magic">Magic</option><option value="hybrid">Hybrid</option></select></label>
+  <span class="placing">Clicking the board places for the <span id="placeTeam">blue</span> team (change it in the Team builder)</span>
 </div>
 <div class="bar">
   <button class="go" id="go">Start fight</button>
@@ -65,31 +106,66 @@ pre{margin:0;white-space:pre-wrap;font:12px/1.5 ui-monospace,Consolas,monospace;
   <button id="mc">Run 200 fights</button>
   <button id="rand">Random boards</button>
   <button id="clear">Clear</button>
+  <button id="copyState">Copy board state</button>
   <label>Stage <select id="stg"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option></select></label>
   <label>Speed <select id="spd"><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option></select></label>
   <label>Seed <input id="seed" type="number" value="1"></label>
 </div>
+<div class="top3">
+<div class="boardcol">
 <canvas id="cv" tabindex="0" aria-label="Hexagonal TFT board, 7 columns by 8 rows"></canvas>
 <div id="ghost" class="ghost" hidden></div>
 <p id="status" role="status" aria-live="polite"></p>
 <p class="legend">Dot colour is damage type (orange attack, purple magic, teal hybrid). Blue bar under health is mana. The same seed always replays the same fight.</p>
-<section id="builder">
-  <h2>Team builder</h2>
+</div>
+<details class="panel" id="inspPanel" open>
+<summary><h2>Selected unit</h2></summary>
+<div id="insp" aria-live="polite"></div>
+</details>
+<details class="panel" id="logPanel" open>
+<summary><h2>Combat log</h2></summary>
+<div class="pbody"><pre id="log">Start a fight to see hits.</pre><pre id="totals"></pre></div>
+</details>
+</div>
+<details class="panel" id="builder" open>
+<summary><h2>Team builder</h2></summary>
+<div class="pbody">
   <p class="hint">Drag a unit onto the board (the half you drop it on decides its team), or click to add it to the <span id="bTeam">Blue</span> side and right-click for the other side. Clicked units go to the front rows if melee and the back rows if ranged. Drag units already on the board to move or swap them.</p>
   <div class="bar">
-    <input id="bSearch" type="search" placeholder="Search units" aria-label="Search units">
+    <span class="placing">Team</span><div class="grp" id="teamGrp" role="group" aria-label="Team to add units to"><button data-team="A" aria-pressed="true">Blue team</button><button data-team="B" aria-pressed="false">Red team</button></div>
+    <input id="bSearch" type="search" placeholder="Search units or traits" aria-label="Search units or traits">
     <select id="bRole" aria-label="Filter by team role"><option value="">All roles</option><option value="tank">Tank</option><option value="fighter">Fighter</option><option value="assassin">Assassin</option><option value="marksman">Marksman</option><option value="caster">Caster</option><option value="specialist">Specialist</option></select>
     <button id="bClearA">Clear blue</button><button id="bClearB">Clear red</button>
   </div>
   <p id="bEmpty" class="hint" hidden>No units loaded. Import a unit CSV below.</p>
   <div id="bGrid" class="tiles"></div>
-</section>
-<section id="roster">
-  <h2>Unit roster (CSV)</h2>
+</div>
+</details>
+<details class="panel" id="traits" open>
+<summary><h2>Traits</h2></summary>
+<div class="pbody">
+  <div class="bar">
+    <label><input type="checkbox" id="traitsOn" checked>Apply trait bonuses in fights</label>
+  </div>
+  <div class="tcols"><div><h2>Blue</h2><div id="trA" class="chips"></div></div><div><h2>Red</h2><div id="trB" class="chips"></div></div></div>
+  <p class="hint">Stat-only traits use patch 18.6 values from traits.csv; other traits are shown greyed out and have no effect. Counts use unique champions, and Lux counts her chosen origin twice. Hover a trait for its current bonus.</p>
+</div>
+</details>
+<details class="panel" id="state" open>
+<summary><h2>Board state</h2></summary>
+<div class="pbody">
+  <p class="hint">Copy board state fills this box and copies it, including the fight so far if one is running. Paste it into the chat to report a movement or targeting problem. Positions are top or bot, a row letter a-d counting out from the centre, then a column 1-7. To rebuild a board, paste a state here and press Load.</p>
+  <div class="bar"><button id="loadState">Load pasted state</button></div>
+  <textarea id="stateText" rows="8" spellcheck="false" aria-label="Board state text"></textarea>
+</div>
+</details>
+<details class="panel" id="roster" open>
+<summary><h2>Unit roster (CSV)</h2></summary>
+<div class="pbody">
   <p class="hint">Import a CSV with one row per unit and its 1-star base stats, then pick the unit in the Unit menu before placing it. Columns you leave out use the role defaults.</p>
   <div class="bar"><label>CSV file <input id="csvFile" type="file" accept=".csv,text/csv,text/plain"></label></div>
   <details><summary>Paste CSV text or see the expected columns</summary>
-    <p class="hint">Headers are case-insensitive. Accepted: name, role (for example Attack Tank), damage_type, hp, ad, ap, attack_speed, armor, magic_resist, range, crit_chance, crit_damage, damage_amp, durability, mana, mana_per_attack, mana_per_second. Write percentages as 25, not 0.25. Optional extras: cost (1 to 5, groups the builder) and image (an https URL or a data:image URI).</p>
+    <p class="hint">Headers are case-insensitive. Accepted: name, role (for example Attack Tank), damage_type, hp, ad, ap, attack_speed, armor, magic_resist, range, crit_chance, crit_damage, damage_amp, durability, mana, mana_per_attack, mana_per_second. Write percentages as 25, not 0.25. Optional extras: cost (1 to 5, groups the builder), image (an https URL or a data:image URI) and traits (semicolon-separated names, for example Lunar;Spellweaver). A traits.csv file imports the same way.</p>
     <textarea id="csvText" rows="7" aria-label="CSV text">name,role,damage_type,hp,ad,ap,attack_speed,armor,magic_resist,range,crit_chance,crit_damage,mana
 Brawler,Attack Tank,,1300,40,100,0.55,60,60,1,25,140,100
 Duelist,Attack Fighter,,850,60,100,0.7,40,40,1,25,140,80
@@ -98,9 +174,10 @@ Mage,Magic Caster,,480,30,100,0.7,20,20,4,25,140,50</textarea>
     <div class="bar"><button id="csvPaste">Import pasted CSV</button></div>
   </details>
   <p id="impStatus" class="hint" role="status" aria-live="polite">No units imported yet.</p>
-</section>
-<section id="insp" aria-live="polite"></section>
-<section><h2>Combat log</h2><pre id="log">Start a fight to see hits.</pre><pre id="totals"></pre></section>
+</div>
+</details>
+
+
 </main>
 <script>
 const COLS=7,ROWS=8,S=34,SQ=Math.sqrt(3);
@@ -140,44 +217,76 @@ function cellAt(px,py){let b=null,bd=1e9;for(let r=0;r<ROWS;r++)for(let c=0;c<CO
 /* stats: base (role defaults + edits, star scaled) plus a list of modifiers {s:stat,f:flat,p:percent} */
 function mk(l,id){
   const b={...ROLES[l.role],...l.o},k=(l.stars||1)-1;
-  b.hp*=STAR.hp**k;b.ad*=STAR.ad**k;
-  return{id,team:l.team,role:l.role,dmg:l.dmg,name:l.unit||cap(l.role),img:l.img||'',label:l.unit?l.unit.slice(0,2):ROLES[l.role].label,stars:l.stars||1,b,
+  b.hp*=STAR.hp**k;b.ad*=STAR.ad**k;b.omnivamp=b.omnivamp||0;
+  return{id,team:l.team,role:l.role,dmg:l.dmg,name:l.unit||cap(l.role),unit:l.unit||'',traits:l.traits||[],variant:l.variant||'',tb:[],dyn:[],tgtSince:0,img:l.img||'',label:l.unit?l.unit.slice(0,2):ROLES[l.role].label,stars:l.stars||1,b,
     mods:l.role==='fighter'?[{s:'as',p:FIGHTER_AS[stage()]}]:[],
     hp:b.hp,maxhp:b.hp,mana:0,mmax:b.mana,range:b.range,c:l.c,r:l.r,fx:l.c,fy:l.r,
-    moving:0,busy:0,nextAtk:0,target:null,hit:-9,cast:-9,dealt:0,taken:0};
+    moving:0,busy:0,nextAtk:0,target:null,hit:-9,cast:-9,dealt:0,taken:0,kills:0,assists:0,lastHit:new Map(),killer:null,tdDone:false};
 }
-function ev(u,k){let f=0,p=0;for(const m of u.mods)if(m.s===k){f+=m.f||0;p+=m.p||0}return(u.b[k]+f)*(1+p)}
+function ev(u,k){let f=0,p=0;for(const m of u.mods)if(m.s===k){if(m.n)f+=m.v*m.n(u);else{f+=m.f||0;p+=m.p||0}}return(u.b[k]+f)*(1+p)}
 const rowName=r=>'abcd'[r<4?3-r:r-4];
 const tag=u=>u.label+(u.team==='A'?'b':'r');
 
 /* simulation */
-function newSim(seed,mc){const all=layout.map((l,i)=>mk(l,i));return{t:0,done:false,mc,seed,rng:rng(seed),log:[],all,units:[...all]}}
-function nearest(u){
-  /* lowest hex distance wins, tanks win ties on distance, any remaining tie is broken at random (seeded) */
-  let best=[],bd=1e9;
-  for(const e of sim.units){if(e.team===u.team||e.hp<=0)continue;const d=dist(u,e)*10+(e.role==='tank'?0:e.role==='assassin'?2:1);if(d<bd){bd=d;best=[e]}else if(d===bd)best.push(e)}
-  return best.length?best[Math.floor(sim.rng()*best.length)]:null;
+function newSim(seed,mc){const all=layout.map((l,i)=>mk(l,i));if(traitsOn)applyTraits(all,!mc);return{t:0,done:false,mc,seed,rng:rng(seed),log:[],all,units:[...all]}}
+/* "closest", in order: hex distance, then Tanks over others (Assassins last), then the true centre-to-centre distance on the board
+   (so a unit straight ahead beats one off to the side at the same hex distance), then a seeded random pick for exact ties */
+const pxOf=(c,r)=>SQ*(c+0.5*(r&1));
+function closeKey(u,e){
+  const dx=pxOf(u.c,u.r)-pxOf(e.c,e.r),dy=1.5*(u.r-e.r);
+  return(dist(u,e)*10+(e.role==='tank'?0:e.role==='assassin'?2:1))*1e7+Math.round((dx*dx+dy*dy)*1e4);
 }
-function pathStep(u,tg){
+function nearest(u){
+  let best=[],bd=Infinity;
+  for(const e of sim.units){if(e.team===u.team||e.hp<=0)continue;const d=closeKey(u,e);if(d<bd){bd=d;best=[e]}else if(d===bd)best.push(e)}
+  return best.length?best[best.length>1?Math.floor(sim.rng()*best.length):0]:null;
+}
+const BLOCK_SLACK=2; /* extra steps a detour may cost before a unit looks for an enemy it can actually reach */
+function setTarget(u,e){u.target=e;u.tgtSince=sim.t}
+/* Walks one hex toward the target. If the way is blocked (going around other units costs BLOCK_SLACK or more extra steps, or there is no route)
+   the unit switches to the enemy it can reach in the fewest steps: closest first, then Tanks, then a seeded random pick. */
+function pathStep(u){
   const occ=new Set(sim.units.filter(x=>x!==u&&x.hp>0).map(x=>x.c+','+x.r));
-  const key=(c,r)=>c+','+r,par=new Map(),q=[[u.c,u.r]];
-  par.set(key(u.c,u.r),null);
+  const key=(c,r)=>c+','+r,par=new Map(),dm=new Map(),q=[[u.c,u.r]];
+  par.set(key(u.c,u.r),null);dm.set(key(u.c,u.r),0);
   for(let i=0;i<q.length;i++){
-    const[c,r]=q[i];
-    if(dist({c,r},tg)<=u.range){
-      let k=key(c,r),prev=null;
-      while(par.get(k)){prev=k;k=par.get(k)}
-      return prev?prev.split(',').map(Number):null;
-    }
-    for(const[x,y]of nbrs(c,r)){const k=key(x,y);if(par.has(k)||occ.has(k))continue;par.set(k,key(c,r));q.push([x,y])}
+    const[c,r]=q[i],d=dm.get(key(c,r));
+    for(const[x,y]of nbrs(c,r)){const k=key(x,y);if(par.has(k)||occ.has(k))continue;par.set(k,key(c,r));dm.set(k,d+1);q.push([x,y])}
   }
+  /* q is in breadth-first order, so the first hex in range of e is the fewest steps away */
+  const steps=e=>{for(const[c,r]of q)if(dist({c,r},e)<=u.range)return dm.get(key(c,r));return Infinity};
+  let tg=u.target,cur=steps(tg);
+  if(cur===Infinity||cur-Math.max(0,dist(u,tg)-u.range)>=BLOCK_SLACK){
+    const cand=[];
+    for(const e of sim.units){
+      if(e.team===u.team||e.hp<=0||e===tg)continue;
+      const l=steps(e);if(l>=cur)continue;
+      cand.push({e,l,k:closeKey(u,e)});
+    }
+    if(cand.length){
+      const ml=Math.min(...cand.map(x=>x.l)),c1=cand.filter(x=>x.l===ml),mk=Math.min(...c1.map(x=>x.k)),c2=c1.filter(x=>x.k===mk);
+      setTarget(u,c2[c2.length>1?Math.floor(sim.rng()*c2.length):0].e);
+      tg=u.target;cur=ml;
+    }
+  }
+  if(cur===0||cur===Infinity)return null; /* in range of the new target, or nothing reachable: stay put */
+  for(const[c,r]of q)if(dist({c,r},tg)<=u.range){let k=key(c,r),prev=null;while(par.get(k)){prev=k;k=par.get(k)}return prev?prev.split(',').map(Number):null}
   return null;
 }
 /* damage pipeline: raw -> crit -> amp -> armor/MR -> durability -> HP, then mana for tanks */
+/* damage amp against a target: the amp stat plus Hunter's and Ravager's conditional bonuses */
+function ampVs(src,tg){
+  let amp=ev(src,'amp');
+  if(tg)for(const d of src.dyn){
+    if(d.trigger==='no_target_swap'){if(sim.t-src.tgtSince>=d.param)amp+=d.value}
+    else if(d.trigger==='double_vs_low_health')amp+=d.value*(tg.hp<tg.maxhp*d.param/100?2:1);
+  }
+  return amp;
+}
 function hit(src,tg,raw,type,canCrit,kind){
   let amt=raw,crit=false;
   if(canCrit&&sim.rng()<ev(src,'crit')/100){amt*=ev(src,'critDmg')/100;crit=true}
-  amt*=1+ev(src,'amp')/100;
+  amt*=1+ampVs(src,tg)/100;
   const pre=amt;
   if(type!=='true')amt*=100/(100+Math.max(0,ev(tg,type==='physical'?'armor':'mr')));
   amt*=1-Math.min(0.9,ev(tg,'dur')/100);
@@ -188,10 +297,25 @@ function applyPending(){
   for(const p of sim.pend){
     const{src,tg,raw,pre,amt,type,kind,crit}=p;
     tg.hp-=amt;src.dealt+=amt;tg.taken+=amt;
+    tg.lastHit.set(src,sim.t);if(tg.hp<=0&&!tg.killer)tg.killer=src;
+    const ov=ev(src,'omnivamp');if(ov>0&&src.hp>0)src.hp=Math.min(src.maxhp,src.hp+amt*ov/100);
     if(tg.role==='tank'&&tg.mmax)tg.mana=Math.min(tg.mmax,tg.mana+Math.min(42,pre*0.01+amt*0.03));
     if(!sim.mc){sim.log.push(`${sim.t.toFixed(2)}s ${tag(src)} > ${tag(tg)} ${kind} ${type} ${raw.toFixed(0)} > ${amt.toFixed(0)}${crit?' crit':''}${tg.hp<=0?' (dead)':''}`);if(sim.log.length>14)sim.log.shift()}
   }
   sim.pend=[];
+  /* takedowns: credit is decided once all of the tick's damage has landed, and only units still alive receive it */
+  for(const u of sim.all){
+    if(u.hp>0||u.tdDone)continue;
+    u.tdDone=true;
+    const k=u.killer;
+    if(k&&k.hp>0)takedown(k,u,'kill');
+    for(const[s,t]of u.lastHit)if(s!==k&&s.team!==u.team&&s.hp>0&&sim.t-t<=ASSIST_WINDOW)takedown(s,u,'assist');
+  }
+}
+function takedown(u,victim,how){
+  if(how==='kill')u.kills++;else u.assists++;
+  for(const d of u.dyn)if(d.trigger==='on_takedown')bump(d);
+  if(!sim.mc){sim.log.push(`${sim.t.toFixed(2)}s ${tag(u)} takedown (${how}) on ${tag(victim)}`);if(sim.log.length>14)sim.log.shift()}
 }
 function cast(u,tg){
   const m=STAR.spell**(u.stars-1),ad=ev(u,'ad'),ap=ev(u,'ap');
@@ -202,26 +326,28 @@ function cast(u,tg){
 function step(){
   sim.t+=DT;sim.pend=[];
   /* ranged units pick targets before melee units move (patch 15.4 rule) */
-  for(const u of [...sim.units.filter(u=>u.range>1),...sim.units.filter(u=>u.range<=1)])if(u.hp>0&&(!u.target||u.target.hp<=0))u.target=nearest(u);
+  for(const u of [...sim.units.filter(u=>u.range>1),...sim.units.filter(u=>u.range<=1)])if(u.hp>0&&(!u.target||u.target.hp<=0))retarget(u);
   /* random acting order each tick (seeded) so no unit gets a permanent first move */
   const order=[...sim.units];
   for(let i=order.length-1;i>0;i--){const j=Math.floor(sim.rng()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
   for(const u of order){
     if(u.hp<=0)continue;
-    if(!u.target||u.target.hp<=0)u.target=nearest(u);
+    if(!u.target||u.target.hp<=0)retarget(u);
+    for(const d of u.dyn)if(d.trigger==='every_seconds'&&sim.t>=d.next){bump(d);d.next+=d.param}
     const tg=u.target;if(!tg)continue;
     if(u.busy>0){u.busy-=DT;continue}
     if(u.mmax)u.mana=Math.min(u.mmax,u.mana+ev(u,'mps')*DT);
     if(u.moving>0){u.moving-=DT;continue}
     if(dist(u,tg)<=u.range){
-      if(u.mmax&&u.mana>=u.mmax){cast(u,tg);u.mana=0;u.busy=CASTTIME;u.cast=sim.t}
+      if(u.mmax&&u.mana>=u.mmax){cast(u,tg);for(const d of u.dyn)if(d.trigger==='per_cast')bump(d);u.mana=0;u.busy=CASTTIME;u.cast=sim.t}
       else if(sim.t>=u.nextAtk){
         hit(u,tg,ev(u,'ad'),'physical',true,'auto');
         if(u.mmax)u.mana=Math.min(u.mmax,u.mana+ev(u,'mpa'));
+        for(const d of u.dyn)if(d.trigger==='per_attack')bump(d);
         u.nextAtk=Math.max(u.nextAtk,sim.t-DT)+1/Math.min(AS_CAP,ev(u,'as'));u.hit=sim.t;
       }
     }else{
-      const n=pathStep(u,tg);
+      const n=pathStep(u);
       if(n){u.fx=u.c;u.fy=u.r;u.c=n[0];u.r=n[1];u.moving=MOVE}
     }
   }
@@ -296,22 +422,64 @@ function draw(){
 function renderInsp(){
   const l=layout[sel];
   if(!l){insp.innerHTML='<p class="hint">Click a placed unit to inspect or edit it. Click an empty hex to place a unit. Right-click a unit to remove it.</p>';return}
-  const head=`<h2>${esc(l.unit?l.unit+' ('+cap(l.role)+')':cap(l.role))} · ${l.team==='A'?'Blue':'Red'} · ${cap(l.dmg)} · ${rowName(l.r)}${l.c+1}</h2>`;
-  if(sim){insp.innerHTML=head+'<p id="live"></p>';return}
+  const head=`<h2>${esc(l.unit?l.unit+' ('+cap(l.role)+')':cap(l.role))} · ${l.team==='A'?'Blue':'Red'} · ${cap(l.dmg)}${sim?'':' · '+rowName(l.r)+(l.c+1)}</h2>`;
+  const trl=l.traits&&l.traits.length?'<p class="hint">Traits: '+l.traits.map(esc).join(', ')+'</p>':'';
+  if(sim){
+    insp.innerHTML=head+trl+`<div class="team-${l.team}"><div class="meterrow"><span>Health</span><div class="meter"><i id="lvHpBar"></i></div><b id="lvHp"></b></div><div class="meterrow"><span>Mana</span><div class="meter mana"><i id="lvManaBar"></i></div><b id="lvMana"></b></div></div><p id="lvLine" class="hint"></p>`+statTable('lv')+'<p id="lvDmg" class="hint"></p><p id="lvBonus" class="hint"></p>';
+    live();return;
+  }
   const R={...ROLES[l.role],...l.o};
-  insp.innerHTML=head+'<div class="fields">'+FIELDS.map(([k,n])=>`<label>${n}<input type="number" step="any" data-k="${k}" value="${R[k]}"></label>`).join('')+
-   `<label>Stars<select data-k="stars">${[1,2,3].map(s=>`<option${(l.stars||1)===s?' selected':''}>${s}</option>`).join('')}</select></label></div><button id="rm">Remove unit</button>`;
+  const vs=l.traits&&l.traits.includes('Avatar')?'<label>Avatar origin<select data-k="variant"><option value="">None</option>'+LUX_VARIANTS.map(v=>'<option'+(l.variant===v?' selected':'')+'>'+v+'</option>').join('')+'</select></label>':'';
+  insp.innerHTML=head+trl+'<div class="fields">'+FIELDS.map(([k,n])=>`<label>${n}<input type="number" step="any" data-k="${k}" value="${R[k]}"></label>`).join('')+
+   `<label>Stars<select data-k="stars">${[1,2,3].map(s=>`<option${(l.stars||1)===s?' selected':''}>${s}</option>`).join('')}</select></label>${vs}</div><button id="rm">Remove unit</button><h3 class="sub2">Totals with current traits</h3>${statTable('pv')}<p id="pvBonus" class="hint"></p>`;
+  fillPreview();
 }
 insp.addEventListener('input',e=>{
   const k=e.target.dataset&&e.target.dataset.k,l=layout[sel],v=Number(e.target.value);
+  if(k==='variant'&&l&&!sim){l.variant=e.target.value;fillPreview();return}
   if(!k||!l||sim||e.target.value===''||isNaN(v))return;
   if(k==='stars')l.stars=v;else l.o[k]=v;
+  fillPreview();
 });
 insp.addEventListener('click',e=>{if(e.target.id==='rm'&&!sim){layout.splice(sel,1);sel=-1;renderInsp()}});
+/* every stat with its base, the bonus from traits and stacks, and the total; one table for combat (lv_) and one for setup (pv_) */
+const STAT_ROWS=[['hp','Health',0],['mana','Max mana',0],['ad','Attack damage',0],['ap','Ability power',0],['as','Attack speed',2],['armor','Armor',0],['mr','Magic resist',0],['range','Range',0],['crit','Crit chance',1,'%'],['critDmg','Crit damage',0,'%'],['amp','Damage amp',1,'%'],['dur','Durability',1,'%'],['omnivamp','Omnivamp',1,'%'],['mpa','Mana per attack',1],['mps','Mana per second',1]];
+function statTable(p){
+  return '<table class="stats"><thead><tr><th>Stat</th><th>Base</th><th>Bonus</th><th>Total</th></tr></thead><tbody>'+
+    STAT_ROWS.map(([k,n])=>`<tr><td>${k==='amp'?'Damage amp (vs target)':n}</td><td id="${p}_${k}_b"></td><td class="bonus" id="${p}_${k}_x"></td><td id="${p}_${k}_t"></td></tr>`).join('')+'</tbody></table>';
+}
+function fillStats(p,u){
+  for(const[k,,d,suf]of STAT_ROWS){
+    const base=u.b[k]||0,tot=k==='as'?Math.min(AS_CAP,ev(u,'as')):k==='amp'?ampVs(u,u.target):ev(u,k);
+    const f=v=>String(Number(v.toFixed(d)))+(suf||''),diff=tot-base;
+    let bonus='-';
+    if(Math.abs(diff)>1e-9){const sg=diff>0?'+':'-';bonus=sg+f(Math.abs(diff));if(!suf&&base>0)bonus+=' ('+sg+Math.round(Math.abs(diff)/base*100)+'%)'}
+    $(p+'_'+k+'_b').textContent=f(base);$(p+'_'+k+'_x').textContent=bonus;$(p+'_'+k+'_t').textContent=f(tot);
+  }
+}
+/* setup view: totals as they will be at the start of combat, with trait bonuses applied */
+function fillPreview(){
+  const l=layout[sel],el=document.getElementById('pv_hp_t');
+  if(!l||sim||!el)return;
+  const u=newSim(seedVal(),false).all[sel];if(!u)return;
+  fillStats('pv',u);
+  $('pvBonus').textContent=u.tb.length?'Trait bonuses at the start of combat: '+u.tb.join(', '):'No trait bonuses.';
+}
+/* combat view: refreshed every frame */
 function live(){
-  const el=$('live');if(!el||sel<0)return;
-  const u=sim.all[sel];if(!u)return;
-  el.textContent=`${u.hp>0?Math.round(u.hp):0} / ${Math.round(u.maxhp)} HP · mana ${Math.round(u.mana)} / ${u.mmax} · AD ${ev(u,'ad').toFixed(0)} · attack speed ${Math.min(AS_CAP,ev(u,'as')).toFixed(2)} · armor ${ev(u,'armor').toFixed(0)} · MR ${ev(u,'mr').toFixed(0)} · dealt ${u.dealt.toFixed(0)} · taken ${u.taken.toFixed(0)}${u.hp>0?'':' · defeated'}`;
+  const u=sim&&sim.all[sel],hpEl=document.getElementById('lvHp');
+  if(!u||!hpEl)return;
+  const t=u.target,dead=u.hp<=0,hp=Math.max(0,u.hp);
+  const state=dead?'defeated':u.busy>0?'casting':u.moving>0?'moving':(t&&dist(u,t)<=u.range?'attacking':'walking');
+  $('lvLine').textContent=`${posLabel(u.c,u.r)} · ${state}${t&&!dead?' · target '+t.name+' ('+posLabel(t.c,t.r)+')':''}`;
+  hpEl.textContent=`${Math.round(hp)} / ${Math.round(u.maxhp)}`;
+  $('lvHpBar').style.width=(100*hp/u.maxhp).toFixed(1)+'%';
+  $('lvMana').textContent=u.mmax?`${Math.round(u.mana)} / ${u.mmax}`:'no mana';
+  $('lvManaBar').style.width=u.mmax?(100*u.mana/u.mmax).toFixed(1)+'%':'0%';
+  $('lvDmg').textContent=`Damage dealt ${Math.round(u.dealt)} · taken ${Math.round(u.taken)} · takedowns ${u.kills+u.assists} (${u.kills} kills, ${u.assists} assists)`+(sim.t>0?` · ${Math.round(u.dealt/sim.t)} per second`:'');
+  const stacks=u.dyn.filter(d=>d.stacks).map(d=>`${d.trait} ×${d.stacks}`);
+  $('lvBonus').textContent=(u.tb.length?'Trait bonuses: '+u.tb.join(', '):'No trait bonuses.')+(stacks.length?' · stacks: '+stacks.join(', '):'');
+  fillStats('lv',u);
 }
 function loop(ts){
   if(running){
@@ -320,15 +488,17 @@ function loop(ts){
     if(running)st.textContent=`Fighting: ${sim.t.toFixed(1)}s (seed ${sim.seed})`;
   }
   last=ts;
+  {const sg=JSON.stringify([Object.keys(TRAITS).length,layout.map(l=>[l.team,l.unit,l.variant||''])]);if(sg!==traitSig){traitSig=sg;renderTraits()}}
+  if(!sim&&sel>=0){const pg=JSON.stringify([traitsOn,lunarReach,stage(),sel,layout.map(l=>[l.team,l.unit,l.variant||'',l.c,l.r,l.stars||1])]);if(pg!==pvSig){pvSig=pg;fillPreview()}}
   if(sim){live();logEl.textContent=sim.log.join('\n')||'No hits yet.'}
   draw();requestAnimationFrame(loop);
 }
 
 /* controls */
 function setPressed(grp,attr,val){document.querySelectorAll(`#${grp} button`).forEach(b=>b.setAttribute('aria-pressed',b.dataset[attr]===val))}
-$('teamGrp').onclick=e=>{const b=e.target.closest('button');if(b){team=b.dataset.team;setPressed('teamGrp','team',team);$('bTeam').textContent=team==='A'?'Blue':'Red'}};
-$('typeGrp').onclick=e=>{const b=e.target.closest('button');if(b){$('unitSel').value='';type=b.dataset.type;setPressed('typeGrp','type',type);dmg=DEFDMG[type];setPressed('dmgGrp','dmg',dmg)}};
-$('dmgGrp').onclick=e=>{const b=e.target.closest('button');if(b){$('unitSel').value='';dmg=b.dataset.dmg;setPressed('dmgGrp','dmg',dmg)}};
+$('teamGrp').onclick=e=>{const b=e.target.closest('button');if(b){team=b.dataset.team;setPressed('teamGrp','team',team);$('bTeam').textContent=team==='A'?'Blue':'Red';$('placeTeam').textContent=team==='A'?'blue':'red'}};
+$('roleSel').onchange=()=>{$('unitSel').value='';type=$('roleSel').value;dmg=DEFDMG[type];$('dmgSel').value=dmg};
+$('dmgSel').onchange=()=>{$('unitSel').value='';dmg=$('dmgSel').value};
 /* drag and drop: pointer events so mouse, pen and (on the board) touch all work */
 let drag=null,suppress=false;
 const ghost=$('ghost');
@@ -414,7 +584,7 @@ const norm=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');
 const safeImg=s=>s&&(s.slice(0,8).toLowerCase()==='https://'||s.slice(0,11).toLowerCase()==='data:image/')?s:'';
 const ALIAS={name:['name','unit','unitname','champion','championname','champ'],role:['role','teamrole','unitrole'],dmg:['damagetype','dmgtype','dmg'],
  hp:['hp','health','maxhealth','maxhp'],ad:['ad','attackdamage','atk','basead'],ap:['ap','abilitypower'],as:['as','attackspeed','aspd'],armor:['armor'],mr:['mr','magicresist','magicresistance'],range:['range','attackrange'],
- crit:['crit','critchance','critrate'],critDmg:['critdmg','critdamage'],amp:['amp','damageamp'],dur:['dur','durability'],mana:['mana','maxmana','manamax'],mpa:['mpa','manaperattack'],mps:['mps','manapersecond','manaregen'],cost:['cost','gold','goldcost'],img:['image','imageurl','img','icon','portrait','picture']};
+ crit:['crit','critchance','critrate'],critDmg:['critdmg','critdamage'],amp:['amp','damageamp'],dur:['dur','durability'],mana:['mana','maxmana','manamax'],mpa:['mpa','manaperattack'],mps:['mps','manapersecond','manaregen'],cost:['cost','gold','goldcost'],traits:['traits','trait','synergies'],img:['image','imageurl','img','icon','portrait','picture']};
 const COLMAP=Object.create(null);for(const k in ALIAS)for(const a of ALIAS[k])COLMAP[a]=k;
 function parseCSV(t){
   if(t.charCodeAt(0)===0xFEFF)t=t.slice(1);
@@ -444,6 +614,7 @@ function impMsg(m){$('impStatus').textContent=m}
 function importCSV(text){
   const rows=parseCSV(text),warn=[];
   if(rows.length<2){impMsg('No data rows found. The first row must be the column headers.');return}
+  if(isTraitFile(rows[0]))return importTraits(rows);
   const cols=rows[0].map(h=>COLMAP[norm(h)]||null),ignored=rows[0].filter((h,i)=>!cols[i]&&h.trim());
   if(!cols.includes('name')){impMsg('No name column found. Accepted headers: name, unit, champion.');return}
   const next=Object.create(null);let skipped=0;
@@ -460,20 +631,312 @@ function importCSV(text){
       if(isNaN(v)||(['hp','as','range'].includes(k)&&v<=0))warn.push(`${rec.name}: ${k} "${rec[k]}" is not usable, using the role default`);
       else o[k]=v;
     }
-    next[rec.name]={role,dmg:d||pr.d||DEFDMG[role],o,cost:Math.round(Number(rec.cost))||0,img:safeImg(rec.img)};
+    next[rec.name]={role,dmg:d||pr.d||DEFDMG[role],o,cost:Math.round(Number(rec.cost))||0,img:safeImg(rec.img),traits:(rec.traits||'').split(';').map(x=>x.trim()).filter(Boolean)};
   });
   roster=next;fillRoster();renderBuilder();
   const n=Object.keys(next).length;
   impMsg(`Imported ${n} unit${n===1?'':'s'}${skipped?`, skipped ${skipped} row${skipped===1?'':'s'} with no name`:''}.${ignored.length?` Ignored columns: ${ignored.join(', ')}.`:''}${warn.length?' Notes: '+warn.slice(0,5).join('; ')+(warn.length>5?`; and ${warn.length-5} more.`:'.'):''}`);
 }
+/* ---------- traits (phase 3): stat-only bonuses from traits.csv, bucket A ---------- */
+const STATMAP={hp:'hp',ad:'ad',ap:'ap',as:'as',armor:'armor',mr:'mr',mana_regen:'mps',durability:'dur',damage_amp:'amp',crit_chance:'crit',crit_damage:'critDmg',omnivamp:'omnivamp',ad_or_ap:'ad_or_ap'};
+const STATLABEL={hp:'HP',ad:'AD',ap:'AP',as:'AS',armor:'armor',mr:'MR',mps:'mana regen',dur:'durability',amp:'damage amp',crit:'crit chance',critDmg:'crit damage',omnivamp:'omnivamp',ad_or_ap:'AD or AP'};
+const PCTPOINT=new Set(['dur','amp','crit','critDmg','omnivamp']); /* stats that are themselves percentages: bonuses add percentage points */
+const LUX_VARIANTS=['Blossom','Coven','Elderwood','Blackthorn','Fae','Inferno','Lunar','Primal','Solar'];
+const MEMBER_MODE={Invoker:'replace'}; /* member value replaces the team value for the same stat (Invoker: the wording lists team and Invoker amounts per tier); every other trait adds on top, because the wording is 'your team gains X, members gain more' */
+let TRAITS=Object.create(null),traitsOn=true,lunarReach='adjacent',traitSig='',pvSig='';
+const ASSIST_WINDOW=3; /* seconds: a unit that damaged the victim within this time before it died gets an assist (unverified) */
+const TRIGGERS=['on_takedown','per_attack','per_cast','every_seconds','no_target_swap','double_vs_low_health','per_enemy_targeting'];
+const DEFAULT_TRAITS=`trait,kind,bucket,count,scope,stat,value,unit,trigger,param
+Brawler,class,A,2,team,hp,120,flat,,
+Brawler,class,A,4,team,hp,120,flat,,
+Brawler,class,A,6,team,hp,120,flat,,
+Brawler,class,A,2,members,hp,25,pct,,
+Brawler,class,A,4,members,hp,40,pct,,
+Brawler,class,A,6,members,hp,65,pct,,
+Defender,class,A,2,team,armor,12,flat,,
+Defender,class,A,4,team,armor,12,flat,,
+Defender,class,A,6,team,armor,12,flat,,
+Defender,class,A,2,team,mr,12,flat,,
+Defender,class,A,4,team,mr,12,flat,,
+Defender,class,A,6,team,mr,12,flat,,
+Defender,class,A,2,members,armor,25,flat,,
+Defender,class,A,4,members,armor,60,flat,,
+Defender,class,A,6,members,armor,115,flat,,
+Defender,class,A,2,members,mr,25,flat,,
+Defender,class,A,4,members,mr,60,flat,,
+Defender,class,A,6,members,mr,115,flat,,
+Juggernaut,class,A,2,team,durability,4,pct,,
+Juggernaut,class,A,4,team,durability,6,pct,,
+Juggernaut,class,A,6,team,durability,8,pct,,
+Juggernaut,class,A,2,members,durability,20,pct,,
+Juggernaut,class,A,4,members,durability,30,pct,,
+Juggernaut,class,A,6,members,durability,42,pct,,
+Invoker,class,A,2,team,mana_regen,1,flat,,
+Invoker,class,A,3,team,mana_regen,1,flat,,
+Invoker,class,A,4,team,mana_regen,2,flat,,
+Invoker,class,A,5,team,mana_regen,2,flat,,
+Invoker,class,A,2,members,mana_regen,3,flat,,
+Invoker,class,A,3,members,mana_regen,4,flat,,
+Invoker,class,A,4,members,mana_regen,6,flat,,
+Invoker,class,A,5,members,mana_regen,8,flat,,
+Hunter,class,A,2,members,ad,20,pct,,
+Hunter,class,A,3,members,ad,30,pct,,
+Hunter,class,A,4,members,ad,40,pct,,
+Hunter,class,A,5,members,ad,60,pct,,
+Spellweaver,class,A,2,team,ap,10,pct,,
+Spellweaver,class,A,4,team,ap,10,pct,,
+Spellweaver,class,A,6,team,ap,10,pct,,
+Spellweaver,class,A,2,members,ap,10,pct,,
+Spellweaver,class,A,4,members,ap,30,pct,,
+Spellweaver,class,A,6,members,ap,55,pct,,
+Adaptor,class,A,2,members,ad_or_ap,25,pct,,
+Adaptor,class,A,3,members,ad_or_ap,35,pct,,
+Adaptor,class,A,4,members,ad_or_ap,50,pct,,
+Executioner,class,A,2,members,crit_chance,15,flat,,
+Executioner,class,A,3,members,crit_chance,15,flat,,
+Executioner,class,A,4,members,crit_chance,15,flat,,
+Rapidfire,class,A,2,team,as,10,pct,,
+Rapidfire,class,A,3,team,as,10,pct,,
+Rapidfire,class,A,4,team,as,10,pct,,
+Rapidfire,class,A,5,team,as,10,pct,,
+Lunar,origin,A,2,adjacent_allies,as,7,pct,,
+Lunar,origin,A,3,adjacent_allies,as,10,pct,,
+Lunar,origin,A,4,adjacent_allies,as,14,pct,,
+Lunar,origin,A,5,adjacent_allies,as,18,pct,,
+Lunar,origin,A,2,adjacent_allies,ap,7,pct,,
+Lunar,origin,A,3,adjacent_allies,ap,12,pct,,
+Lunar,origin,A,4,adjacent_allies,ap,16,pct,,
+Lunar,origin,A,5,adjacent_allies,ap,20,pct,,
+Lunar,origin,A,2,members,as,14,pct,,
+Lunar,origin,A,3,members,as,20,pct,,
+Lunar,origin,A,4,members,as,28,pct,,
+Lunar,origin,A,5,members,as,36,pct,,
+Lunar,origin,A,2,members,ap,14,pct,,
+Lunar,origin,A,3,members,ap,24,pct,,
+Lunar,origin,A,4,members,ap,32,pct,,
+Lunar,origin,A,5,members,ap,40,pct,,
+Blossom,origin,A,3,members,ad,12,pct,,
+Blossom,origin,A,5,members,ad,30,pct,,
+Blossom,origin,A,7,members,ad,55,pct,,
+Blossom,origin,A,9,members,ad,65,pct,,
+Blossom,origin,A,11,members,ad,100,pct,,
+Blossom,origin,A,3,members,ap,12,pct,,
+Blossom,origin,A,5,members,ap,30,pct,,
+Blossom,origin,A,7,members,ap,55,pct,,
+Blossom,origin,A,9,members,ap,65,pct,,
+Blossom,origin,A,11,members,ap,100,pct,,
+Blossom,origin,A,3,members,hp,10,pct,,
+Blossom,origin,A,5,members,hp,10,pct,,
+Blossom,origin,A,7,members,hp,10,pct,,
+Blossom,origin,A,9,members,hp,10,pct,,
+Blossom,origin,A,11,members,hp,10,pct,,
+Thornmaiden,origin,A,1,team,durability,5,pct,,
+Ravager,class,A,2,members,omnivamp,10,pct,,
+Ravager,class,A,4,members,omnivamp,10,pct,,
+Ravager,class,A,6,members,omnivamp,10,pct,,
+Thornmaiden,origin,B,,,,,,,
+Fae,origin,B,,,,,,,
+Attuned,origin,B,,,,,,,
+Old Growth,origin,B,,,,,,,
+Apex Predator,origin,C,,,,,,,
+Avatar,origin,C,,,,,,,
+Blackthorn,origin,C,,,,,,,
+Bounty Seeker,origin,C,,,,,,,
+Caustic,origin,C,,,,,,,
+Coven,origin,C,,,,,,,
+Eclipse,origin,C,,,,,,,
+Elderwood,origin,C,,,,,,,
+Emerald Aspect,origin,C,,,,,,,
+Flora Fatalis,origin,C,,,,,,,
+Greenfather,origin,C,,,,,,,
+Inferno,origin,C,,,,,,,
+Primal,origin,C,,,,,,,
+Rival,origin,C,,,,,,,
+Solar,origin,C,,,,,,,
+Sprykin,origin,C,,,,,,,
+Summoner,class,C,,,,,,,
+Vanguard,class,C,,,,,,,
+Rapidfire,class,B,2,members,as,3,pct,per_attack,10
+Rapidfire,class,B,3,members,as,5,pct,per_attack,10
+Rapidfire,class,B,4,members,as,7,pct,per_attack,10
+Rapidfire,class,B,5,members,as,10,pct,per_attack,10
+Spellweaver,class,B,2,members,ap,1,pct,per_cast,
+Spellweaver,class,B,4,members,ap,1,pct,per_cast,
+Spellweaver,class,B,6,members,ap,2,pct,per_cast,
+Hunter,class,B,2,members,damage_amp,10,pct,no_target_swap,3
+Hunter,class,B,3,members,damage_amp,10,pct,no_target_swap,3
+Hunter,class,B,4,members,damage_amp,10,pct,no_target_swap,3
+Hunter,class,B,5,members,damage_amp,10,pct,no_target_swap,3
+Ravager,class,B,2,members,damage_amp,12,pct,double_vs_low_health,50
+Ravager,class,B,4,members,damage_amp,25,pct,double_vs_low_health,50
+Ravager,class,B,6,members,damage_amp,40,pct,double_vs_low_health,50
+Monolith,origin,B,1,members,armor,10,flat,per_enemy_targeting,
+Monolith,origin,B,1,members,mr,10,flat,per_enemy_targeting,
+Riftbeast,origin,B,7,members,ad,5,pct,every_seconds,5
+Riftbeast,origin,B,10,members,ad,5,pct,every_seconds,5
+Riftbeast,origin,B,7,members,ap,5,pct,every_seconds,5
+Riftbeast,origin,B,10,members,ap,5,pct,every_seconds,5`;
+const isTraitFile=h=>{const n=h.map(norm);return n.includes('bucket')&&n.includes('scope')&&n.includes('stat')};
+/* tiers = static bonuses applied at combat start; dtiers = bonuses that change during combat (rows with a trigger) */
+function importTraits(rows,quiet){
+  const h=rows[0].map(norm),T=Object.create(null),warn=[],rank={A:3,B:2,C:1};
+  const col={};for(const k of ['trait','bucket','count','scope','stat','value','unit','trigger','param'])col[k]=h.indexOf(k);
+  for(const row of rows.slice(1)){
+    const g=k=>col[k]<0?'':(row[col[k]]||'').trim(),name=g('trait'),b=g('bucket').toUpperCase()||'C';
+    if(!name)continue;
+    const t=T[name]||(T[name]={bucket:'C',tiers:Object.create(null),dtiers:Object.create(null),modelled:false});
+    if(rank[b]>rank[t.bucket])t.bucket=b;
+    if(g('count')&&(b==='A'||b==='B')){
+      const cnt=Number(g('count')),v=Number(g('value').replace(',','.')),st=STATMAP[g('stat')],sc=g('scope'),tr=g('trigger');
+      if(!(cnt>0)||isNaN(v)||!st||!['team','members','adjacent_allies'].includes(sc)||(tr&&!TRIGGERS.includes(tr))){warn.push(name+': a row was skipped');continue}
+      const dst=tr?t.dtiers:t.tiers;
+      (dst[cnt]||(dst[cnt]=[])).push({scope:sc,stat:st,value:v,unit:g('unit'),trigger:tr,param:g('param')===''?0:Number(g('param'))});
+    }
+  }
+  for(const t of Object.values(T))t.modelled=Object.keys(t.tiers).length+Object.keys(t.dtiers).length>0;
+  TRAITS=T;
+  if(!quiet){const n=Object.keys(T).length,m=Object.values(T).filter(t=>t.modelled).length;impMsg(`Imported ${n} traits, ${m} with stat bonuses modelled.${warn.length?' Notes: '+warn.slice(0,5).join('; ')+'.':''}`)}
+}
+importTraits(parseCSV(DEFAULT_TRAITS),true);
+const pcts=r=>(r.unit==='pct'||PCTPOINT.has(r.stat))?'%':'';
+function describe(r){
+  const v=`+${r.value}${pcts(r)} ${STATLABEL[r.stat]}`;
+  switch(r.trigger){
+    case 'per_attack':return `${v} per attack${r.param?`, up to ${r.param} stacks`:''}`;
+    case 'per_cast':return `${v} per cast`;
+    case 'on_takedown':return `${v} per takedown (kill or assist)${r.param?`, up to ${r.param} stacks`:''}`;
+    case 'every_seconds':return `${v} every ${r.param}s`;
+    case 'no_target_swap':return `${v} after ${r.param}s on one target`;
+    case 'double_vs_low_health':return `${v}, doubled against targets below ${r.param}% health`;
+    case 'per_enemy_targeting':return `${v} per enemy targeting this unit`;
+    default:return v;
+  }
+}
+const TARGETED=u=>sim?sim.units.reduce((n,e)=>n+(e.team!==u.team&&e.hp>0&&e.target===u?1:0),0):0;
+function makeDyn(t,r){
+  const d={trait:t,stat:r.stat,value:r.value,unit:r.unit,trigger:r.trigger,param:r.param,stacks:0,next:r.param,m:null};
+  if(r.trigger==='per_attack'||r.trigger==='per_cast'||r.trigger==='every_seconds'||r.trigger==='on_takedown')d.m={s:r.stat,f:0,p:0};
+  else if(r.trigger==='per_enemy_targeting')d.m={s:r.stat,v:r.value,n:TARGETED};
+  return d;
+}
+function bump(d){
+  if((d.trigger==='per_attack'||d.trigger==='on_takedown')&&d.param&&d.stacks>=d.param)return;
+  d.stacks++;
+  if(PCTPOINT.has(d.stat)||d.unit==='flat')d.m.f=d.stacks*d.value;else d.m.p=d.stacks*d.value/100;
+}
+function retarget(u){u.target=nearest(u);u.tgtSince=sim.t}
+/* counts use unique champions; Lux counts her chosen origin twice. members lists every unit with the trait. */
+function teamTraitInfo(items){
+  const count=Object.create(null),mem=Object.create(null),seen=new Set();
+  for(const it of items){
+    if(!it.unit)continue;
+    const key=it.unit+'|'+(it.variant||''),fresh=!seen.has(key);seen.add(key);
+    const add=(t,w)=>{if(fresh)count[t]=(count[t]||0)+w;(mem[t]||(mem[t]=[])).push(it)};
+    for(const t of it.traits||[])add(t,1);
+    if(it.variant&&(it.traits||[]).includes('Avatar'))add(it.variant,2);
+  }
+  const active=Object.create(null);
+  for(const t in count){const d=TRAITS[t];if(!d||!d.modelled)continue;let best=0;for(const k of [...Object.keys(d.tiers),...Object.keys(d.dtiers)])if(+k<=count[t]&&+k>best)best=+k;if(best)active[t]=best}
+  return{count,mem,active};
+}
+function applyTraits(all,record){
+  for(const tm of ['A','B']){
+    const items=all.filter(u=>u.team===tm),info=teamTraitInfo(items);
+    for(const t in info.active){
+      const tier=info.active[t],rows=TRAITS[t].tiers[tier]||[],dyn=TRAITS[t].dtiers[tier]||[],mem=new Set(info.mem[t]);
+      const memberStats=new Set(rows.filter(r=>r.scope==='members').map(r=>r.stat));
+      const wantsAdj=rows.some(r=>r.scope==='adjacent_allies');
+      for(const u of items){
+        const isMem=mem.has(u);
+        const isAdj=!isMem&&wantsAdj&&([...mem].some(m=>nbrs(m.c,m.r).some(([x,y])=>x===u.c&&y===u.r)));
+        for(const r of rows){
+          if(r.scope==='members'&&!isMem)continue;
+          if(r.scope==='adjacent_allies'&&!isAdj)continue;
+          if(r.scope==='team'&&isMem&&MEMBER_MODE[t]==='replace'&&memberStats.has(r.stat))continue;
+          const st=r.stat==='ad_or_ap'?(u.b.ap>u.b.ad?'ap':'ad'):r.stat,pp=PCTPOINT.has(st);
+          u.mods.push(pp||r.unit==='flat'?{s:st,f:r.value}:{s:st,p:r.value/100});
+          if(record)u.tb.push(`${t}: +${r.value}${(pp||r.unit==='pct')?'%':''} ${STATLABEL[st]}`);
+        }
+        for(const r of dyn){
+          if((r.scope==='members'&&!isMem)||r.scope==='adjacent_allies')continue;
+          const d=makeDyn(t,r);if(d.m)u.mods.push(d.m);u.dyn.push(d);
+          if(record)u.tb.push(`${t}: ${describe(r)}`);
+        }
+      }
+    }
+    for(const u of items){u.maxhp=ev(u,'hp');u.hp=u.maxhp}
+  }
+}
+function renderTraits(){
+  for(const tm of ['A','B']){
+    const box=$('tr'+tm);box.textContent='';
+    const info=teamTraitInfo(layout.filter(l=>l.team===tm));
+    const names=Object.keys(info.count).sort((a,b)=>(info.active[b]?1:0)-(info.active[a]?1:0)||info.count[b]-info.count[a]||a.localeCompare(b));
+    if(!names.length){const p=document.createElement('span');p.className='hint';p.textContent='No traits yet.';box.appendChild(p);continue}
+    for(const t of names){
+      const d=TRAITS[t],c=document.createElement('span'),on=info.active[t],modelled=d&&d.modelled;
+      const first=modelled?Math.min(...[...Object.keys(d.tiers),...Object.keys(d.dtiers)].map(Number)):0;
+      c.className='chip'+(on?' on':' dim');
+      c.textContent=`${t} ${info.count[t]}`+(on?(on!==info.count[t]?` (${on})`:''):modelled?` / ${first}`:' · no effect');
+      if(on)c.title=[...(d.tiers[on]||[]),...(d.dtiers[on]||[])].map(r=>`${r.scope==='adjacent_allies'?'adjacent allies':r.scope}: ${describe(r)}`).join(NL);
+      else if(!modelled)c.title=(d&&d.bucket==='B'?'Stat bonus that changes during combat':'Mechanic')+'; not modelled yet.';
+      box.appendChild(c);
+    }
+  }
+}
+$('traitsOn').onchange=()=>{traitsOn=$('traitsOn').checked;st.textContent='Trait bonuses '+(traitsOn?'on':'off')+' for the next fight.'};
+
+/* ---------- board state: copy as text for bug reports, load it back ---------- */
+const posLabel=(c,r)=>(r<4?'top':'bot')+'-'+rowName(r)+(c+1);
+const sideName=t=>t==='A'?'BLUE':'RED';
+function stateText(){
+  const L=[],edits=l=>{const b=l.unit&&roster[l.unit]?roster[l.unit].o:{},d={};for(const k in l.o)if(b[k]!==l.o[k])d[k]=l.o[k];return d};
+  L.push(`TFTSIM v1 | stage ${stage()} | seed ${seedVal()} | traits ${traitsOn?'on':'off'} | lunar ${lunarReach}`);
+  L.push('Positions: top or bot = half of the board, letter a-d counts out from the centre line, number 1-7 runs left to right. [c,r] is the same hex as 0-based column and row (row 0 = back row of the top half).');
+  L.push('SETUP (#id side unit position [c,r] role/damage stars, edits = stats changed from the CSV):');
+  layout.forEach((l,i)=>{const e=edits(l);L.push(`#${i} ${sideName(l.team)} ${l.unit||'(generic)'}${l.variant?' ['+l.variant+']':''} ${posLabel(l.c,l.r)} [c${l.c},r${l.r}] ${cap(l.role)}/${cap(l.dmg)} ${l.stars||1}-star${Object.keys(e).length?' edits='+JSON.stringify(e):''}`)});
+  for(const tm of ['A','B']){const info=teamTraitInfo(layout.filter(l=>l.team===tm));L.push(`TRAITS ${sideName(tm)}: `+(Object.keys(info.count).sort().map(t=>t+' '+info.count[t]+(info.active[t]?' (active '+info.active[t]+')':'')).join(', ')||'none'))}
+  if(sim){
+    L.push(`LIVE t=${sim.t.toFixed(2)}s${sim.done?' (finished)':running?'':' (paused)'} (current positions, health, targets):`);
+    for(const u of sim.all){
+      const t=u.target,state=u.hp<=0?'dead':u.busy>0?'casting':u.moving>0?'moving from '+posLabel(u.fx,u.fy):(t&&dist(u,t)<=u.range?'in range':'walking');
+      L.push(`#${u.id} ${sideName(u.team)} ${u.name} ${posLabel(u.c,u.r)} [c${u.c},r${u.r}] hp ${Math.round(Math.max(0,u.hp))}/${Math.round(u.maxhp)} mana ${Math.round(u.mana)}/${u.mmax} range ${u.range} target ${t?'#'+t.id+' '+t.name+' '+posLabel(t.c,t.r):'none'} ${state}`+(u.dyn.some(d=>d.stacks)?' stacks '+u.dyn.filter(d=>d.stacks).map(d=>d.trait+'x'+d.stacks).join(','):''));
+    }
+  }
+  L.push('DATA '+JSON.stringify({v:1,stage:stage(),seed:seedVal(),traits:traitsOn,lunar:lunarReach,layout:layout.map(l=>({team:l.team,unit:l.unit||'',role:l.role,dmg:l.dmg,stars:l.stars||1,c:l.c,r:l.r,...(l.variant?{variant:l.variant}:{}),...(Object.keys(l.o).length?{o:l.o}:{})}))}));
+  return L.join(NL);
+}
+$('copyState').onclick=async()=>{
+  const t=stateText(),box=$('stateText');box.value=t;
+  try{await navigator.clipboard.writeText(t);st.textContent='Board state copied. Paste it into the chat.'}
+  catch(err){box.focus();box.select();st.textContent='The browser blocked copying, so the text is selected in the Board state box below. Press Ctrl+C (Cmd+C on Mac).'}
+};
+$('loadState').onclick=()=>{
+  const line=$('stateText').value.split(NL).find(x=>x.startsWith('DATA '));
+  if(!line){st.textContent='No DATA line found. Paste a board state copied from this page.';return}
+  let d;try{d=JSON.parse(line.slice(5))}catch(err){st.textContent='The DATA line is damaged and could not be read.';return}
+  if(!d||!Array.isArray(d.layout)){st.textContent='The DATA line has no board in it.';return}
+  const next=[];let skipped=0;
+  for(const x of d.layout){
+    if(!x||!ROLES[x.role]||!['A','B'].includes(x.team)||!(x.c>=0&&x.c<COLS)||!(x.r>=0&&x.r<ROWS)||next.some(n=>n.c===x.c&&n.r===x.r)){skipped++;continue}
+    const u=x.unit&&roster[x.unit];
+    next.push({team:x.team,role:x.role,dmg:DEFDMG[x.role]&&['attack','magic','hybrid'].includes(x.dmg)?x.dmg:DEFDMG[x.role],stars:[1,2,3].includes(x.stars)?x.stars:1,o:{...(x.o||{})},c:x.c,r:x.r,...(x.unit?{unit:x.unit,img:u?u.img:'',traits:u?[...u.traits]:[]}:{}),...(x.variant?{variant:x.variant}:{})});
+  }
+  layout=next;sel=-1;
+  if(['2','3','4','5','6'].includes(String(d.stage)))$('stg').value=String(d.stage);
+  if(Number.isFinite(d.seed))$('seed').value=String(d.seed);
+  traitsOn=d.traits!==false;$('traitsOn').checked=traitsOn;
+  lunarReach='adjacent';
+  resetSim(`Loaded ${next.length} units from the pasted state${skipped?` (${skipped} skipped)`:''}.`);
+};
 function fillRoster(){
   $('unitSel').innerHTML='<option value="">Generic role</option>'+Object.keys(roster).map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
 }
 function newUnit(c,r){
   const n=$('unitSel').value,u=n&&roster[n];
-  return u?{team,role:u.role,dmg:u.dmg,stars:1,o:{...u.o},unit:n,img:u.img,c,r}:{team,role:type,dmg,stars:1,o:{},c,r};
+  return u?{team,role:u.role,dmg:u.dmg,stars:1,o:{...u.o},unit:n,img:u.img,traits:[...u.traits],c,r}:{team,role:type,dmg,stars:1,o:{},c,r};
 }
-$('unitSel').onchange=()=>{const u=roster[$('unitSel').value];if(u){type=u.role;dmg=u.dmg;setPressed('typeGrp','type',type);setPressed('dmgGrp','dmg',dmg)}};
+$('unitSel').onchange=()=>{const u=roster[$('unitSel').value];if(u){type=u.role;dmg=u.dmg;$('roleSel').value=type;$('dmgSel').value=dmg}};
 $('csvFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{importCSV(await f.text())}catch(err){impMsg('Could not read that file.')}e.target.value=''};
 $('csvPaste').onclick=()=>importCSV($('csvText').value);
 /* team builder: one tile per imported unit; click adds it to the board */
@@ -488,7 +951,7 @@ function placeUnit(name,tm,c,r){
   const u=roster[name];
   if(!u)return false;
   if(sim){st.textContent='Reset the board before adding units.';return false}
-  layout.push({team:tm,role:u.role,dmg:u.dmg,stars:1,o:{...u.o},unit:name,img:u.img,c,r});
+  layout.push({team:tm,role:u.role,dmg:u.dmg,stars:1,o:{...u.o},unit:name,img:u.img,traits:[...u.traits],c,r});
   st.textContent=`Added ${name} to ${tm==='A'?'Blue':'Red'} at ${rowName(r)}${c+1} (${layout.filter(l=>l.team===tm).length} of 28 hexes used).`;
   return true;
 }
@@ -504,14 +967,14 @@ function renderBuilder(){
   const g=$('bGrid'),q=$('bSearch').value.trim().toLowerCase(),rf=$('bRole').value;
   g.textContent='';
   $('bEmpty').hidden=Object.keys(roster).length>0;
-  const names=Object.keys(roster).filter(n=>(!q||n.toLowerCase().includes(q))&&(!rf||roster[n].role===rf)).sort((a,b)=>(roster[a].cost||0)-(roster[b].cost||0)||a.localeCompare(b));
+  const names=Object.keys(roster).filter(n=>(!q||n.toLowerCase().includes(q)||(roster[n].traits||[]).some(t=>t.toLowerCase().includes(q)))&&(!rf||roster[n].role===rf)).sort((a,b)=>(roster[a].cost||0)-(roster[b].cost||0)||a.localeCompare(b));
   const anyCost=names.some(n=>roster[n].cost);let lastCost=-1;
   for(const n of names){
     const u=roster[n],R={...ROLES[u.role],...u.o};
     if(anyCost&&u.cost!==lastCost){lastCost=u.cost;const h=document.createElement('div');h.className='cg';h.textContent=u.cost?`${u.cost} gold`:'No cost listed';g.appendChild(h)}
     const b=document.createElement('button'),pic=document.createElement('span'),ph=document.createElement('span'),nm=document.createElement('span'),rl=document.createElement('span');
     b.className='tile';b.type='button';b.dataset.unit=n;
-    b.title=[n,`${cap(u.dmg)} ${cap(u.role)}`,`HP ${R.hp}  AD ${R.ad}  AS ${R.as}`,`Armor ${R.armor}  MR ${R.mr}  Range ${R.range}  Mana ${R.mana}`].join(NL);
+    b.title=[n,`${cap(u.dmg)} ${cap(u.role)}`,`HP ${R.hp}  AD ${R.ad}  AS ${R.as}`,`Armor ${R.armor}  MR ${R.mr}  Range ${R.range}  Mana ${R.mana}`,...(u.traits.length?['Traits: '+u.traits.join(', ')]:[])].join(NL);
     if(COSTCOL[u.cost])b.style.borderColor=COSTCOL[u.cost];
     pic.className='pic';ph.textContent=n.slice(0,2);pic.appendChild(ph);
     if(u.img){const im=document.createElement('img');im.alt='';im.draggable=false;im.loading='lazy';im.src=u.img;pic.appendChild(im)}
@@ -554,7 +1017,7 @@ $('rand').onclick=()=>{
     cells.sort(()=>Math.random()-0.5);
     for(let i=0;i<6;i++){
       const names=Object.keys(roster);
-      if(names.length){const n=names[Math.floor(Math.random()*names.length)],u=roster[n];layout.push({team:t,role:u.role,dmg:u.dmg,stars:1,o:{...u.o},unit:n,img:u.img,c:cells[i][0],r:cells[i][1]})}
+      if(names.length){const n=names[Math.floor(Math.random()*names.length)],u=roster[n];layout.push({team:t,role:u.role,dmg:u.dmg,stars:1,o:{...u.o},unit:n,img:u.img,traits:[...u.traits],c:cells[i][0],r:cells[i][1]})}
       else{const rr=ks[Math.floor(Math.random()*ks.length)];layout.push({team:t,role:rr,dmg:DEFDMG[rr],stars:1,o:{},c:cells[i][0],r:cells[i][1]})}
     }
   }
@@ -562,6 +1025,18 @@ $('rand').onclick=()=>{
 importCSV($('csvText').value);
 /* when served over http (for example GitHub Pages) load units-set18.csv from the same folder; otherwise keep the example units */
 try{fetch('units-set18.csv').then(r=>r.ok?r.text():Promise.reject()).then(t=>{importCSV(t);$('rand').click()}).catch(()=>{})}catch(err){}
+try{fetch('traits.csv').then(r=>r.ok?r.text():Promise.reject()).then(t=>{importCSV(t)}).catch(()=>{})}catch(err){}
+/* collapsible panels: remember which ones were closed */
+{
+  const KEY='tftsim.panels',panels=[...document.querySelectorAll('details.panel')];
+  let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(err){saved={}}
+  for(const p of panels){
+    if(saved[p.id]===false)p.open=false;
+    p.addEventListener('toggle',()=>{saved[p.id]=p.open;try{localStorage.setItem(KEY,JSON.stringify(saved))}catch(err){}});
+  }
+  $('collapseAll').onclick=()=>panels.forEach(p=>{p.open=false});
+  $('expandAll').onclick=()=>panels.forEach(p=>{p.open=true});
+}
 $('rand').click();
 requestAnimationFrame(loop);
 </script>
