@@ -1,0 +1,130 @@
+trait,kind,bucket,count,scope,stat,value,unit,trigger,param,confidence,notes
+Brawler,class,A,2,team,hp,120,flat,,,two sources agree on numbers,Unverified: whether Brawlers get the team 120 on top of their own %.
+Brawler,class,A,4,team,hp,120,flat,,,two sources agree on numbers,Unverified: whether Brawlers get the team 120 on top of their own %.
+Brawler,class,A,6,team,hp,120,flat,,,two sources agree on numbers,Unverified: whether Brawlers get the team 120 on top of their own %.
+Brawler,class,A,2,members,hp,25,pct,,,two sources agree on numbers,Percent of max health.
+Brawler,class,A,4,members,hp,40,pct,,,two sources agree on numbers,Percent of max health.
+Brawler,class,A,6,members,hp,65,pct,,,two sources agree on numbers,Percent of max health.
+Defender,class,A,2,team,armor,12,flat,,,"cross-checked: wiki, Mobalytics Oct guide, 18.3 notes",
+Defender,class,A,4,team,armor,12,flat,,,"cross-checked: wiki, Mobalytics Oct guide, 18.3 notes",
+Defender,class,A,6,team,armor,12,flat,,,"cross-checked: wiki, Mobalytics Oct guide, 18.3 notes",
+Defender,class,A,2,team,mr,12,flat,,,"cross-checked: wiki, Mobalytics Oct guide, 18.3 notes",
+Defender,class,A,4,team,mr,12,flat,,,"cross-checked: wiki, Mobalytics Oct guide, 18.3 notes",
+Defender,class,A,6,team,mr,12,flat,,,"cross-checked: wiki, Mobalytics Oct guide, 18.3 notes",
+Defender,class,A,2,members,armor,25,flat,,,"cross-checked: wiki, Mobalytics Oct guide, 18.3 notes",115 at 6 is post-18.3 (was 120). Unverified: whether this replaces or adds to the team 12.
+Defender,class,A,4,members,armor,60,flat,,,"cross-checked: wiki, Mobalytics Oct guide, 18.3 notes",115 at 6 is post-18.3 (was 120). Unverified: whether this replaces or adds to the team 12.
+Defender,class,A,6,members,armor,115,flat,,,"cross-checked: wiki, Mobalytics Oct guide, 18.3 notes",115 at 6 is post-18.3 (was 120). Unverified: whether this replaces or adds to the team 12.
+Defender,class,A,2,members,mr,25,flat,,,"cross-checked: wiki, Mobalytics Oct guide, 18.3 notes",Same as armor.
+Defender,class,A,4,members,mr,60,flat,,,"cross-checked: wiki, Mobalytics Oct guide, 18.3 notes",Same as armor.
+Defender,class,A,6,members,mr,115,flat,,,"cross-checked: wiki, Mobalytics Oct guide, 18.3 notes",Same as armor.
+Juggernaut,class,A,2,team,durability,4,pct,,,team 4 and 6: two sources; team 8 at 6: op.gg only,Percent damage reduction.
+Juggernaut,class,A,4,team,durability,6,pct,,,team 4 and 6: two sources; team 8 at 6: op.gg only,Percent damage reduction.
+Juggernaut,class,A,6,team,durability,8,pct,,,team 4 and 6: two sources; team 8 at 6: op.gg only,Percent damage reduction.
+Juggernaut,class,A,2,members,durability,20,pct,,,18.4 patch notes,Post-18.4 (was 20/33/45). Unverified: whether this replaces the team value.
+Juggernaut,class,A,4,members,durability,30,pct,,,18.4 patch notes,Post-18.4 (was 20/33/45). Unverified: whether this replaces the team value.
+Juggernaut,class,A,6,members,durability,42,pct,,,18.4 patch notes,Post-18.4 (was 20/33/45). Unverified: whether this replaces the team value.
+Invoker,class,A,2,team,mana_regen,1,flat,,,"cross-checked: Mobalytics guide, 18.3 notes",Mana per second.
+Invoker,class,A,3,team,mana_regen,1,flat,,,"cross-checked: Mobalytics guide, 18.3 notes",Mana per second.
+Invoker,class,A,4,team,mana_regen,2,flat,,,"cross-checked: Mobalytics guide, 18.3 notes",Mana per second.
+Invoker,class,A,5,team,mana_regen,2,flat,,,"cross-checked: Mobalytics guide, 18.3 notes",Mana per second.
+Invoker,class,A,2,members,mana_regen,3,flat,,,"cross-checked: Mobalytics guide, 18.3 notes",Post-18.3 (5-piece was 9). Replaces the team value (sources show team | members).
+Invoker,class,A,3,members,mana_regen,4,flat,,,"cross-checked: Mobalytics guide, 18.3 notes",Post-18.3 (5-piece was 9). Replaces the team value (sources show team | members).
+Invoker,class,A,4,members,mana_regen,6,flat,,,"cross-checked: Mobalytics guide, 18.3 notes",Post-18.3 (5-piece was 9). Replaces the team value (sources show team | members).
+Invoker,class,A,5,members,mana_regen,8,flat,,,"cross-checked: Mobalytics guide, 18.3 notes",Post-18.3 (5-piece was 9). Replaces the team value (sources show team | members).
+Hunter,class,A,2,members,ad,20,pct,,,18.3 patch notes,Post-18.3 (was 20/30/45/65). Dynamic part in the bucket B row.
+Hunter,class,A,3,members,ad,30,pct,,,18.3 patch notes,Post-18.3 (was 20/30/45/65). Dynamic part in the bucket B row.
+Hunter,class,A,4,members,ad,40,pct,,,18.3 patch notes,Post-18.3 (was 20/30/45/65). Dynamic part in the bucket B row.
+Hunter,class,A,5,members,ad,60,pct,,,18.3 patch notes,Post-18.3 (was 20/30/45/65). Dynamic part in the bucket B row.
+Spellweaver,class,A,2,team,ap,10,pct,,,op.gg launch values + patch notes (no later change found),
+Spellweaver,class,A,4,team,ap,10,pct,,,op.gg launch values + patch notes (no later change found),
+Spellweaver,class,A,6,team,ap,10,pct,,,op.gg launch values + patch notes (no later change found),
+Spellweaver,class,A,2,members,ap,10,pct,,,op.gg launch values + patch notes (no later change found),Unverified: whether this replaces or adds to the team 10%. Per-cast stacks in the bucket B row.
+Spellweaver,class,A,4,members,ap,30,pct,,,op.gg launch values + patch notes (no later change found),Unverified: whether this replaces or adds to the team 10%. Per-cast stacks in the bucket B row.
+Spellweaver,class,A,6,members,ap,55,pct,,,op.gg launch values + patch notes (no later change found),Unverified: whether this replaces or adds to the team 10%. Per-cast stacks in the bucket B row.
+Adaptor,class,A,2,members,ad_or_ap,25,pct,,,op.gg launch values + patch notes (no later change found),Applies to whichever of AD or AP is higher at combat start. The ability changes are not modelled.
+Adaptor,class,A,3,members,ad_or_ap,35,pct,,,op.gg launch values + patch notes (no later change found),Applies to whichever of AD or AP is higher at combat start. The ability changes are not modelled.
+Adaptor,class,A,4,members,ad_or_ap,50,pct,,,op.gg launch values + patch notes (no later change found),Applies to whichever of AD or AP is higher at combat start. The ability changes are not modelled.
+Executioner,class,A,2,members,crit_chance,15,flat,,,op.gg launch values + patch notes (no later change found),Percentage points. Precision (abilities can crit) and bleed are not modelled; the sim's spells cannot crit.
+Executioner,class,A,3,members,crit_chance,15,flat,,,op.gg launch values + patch notes (no later change found),Percentage points. Precision (abilities can crit) and bleed are not modelled; the sim's spells cannot crit.
+Executioner,class,A,4,members,crit_chance,15,flat,,,op.gg launch values + patch notes (no later change found),Percentage points. Precision (abilities can crit) and bleed are not modelled; the sim's spells cannot crit.
+Rapidfire,class,A,2,team,as,10,pct,,,op.gg launch values + patch notes (no later change found),Per-attack stacking is in the bucket B row.
+Rapidfire,class,A,3,team,as,10,pct,,,op.gg launch values + patch notes (no later change found),Per-attack stacking is in the bucket B row.
+Rapidfire,class,A,4,team,as,10,pct,,,op.gg launch values + patch notes (no later change found),Per-attack stacking is in the bucket B row.
+Rapidfire,class,A,5,team,as,10,pct,,,op.gg launch values + patch notes (no later change found),Per-attack stacking is in the bucket B row.
+Lunar,origin,A,2,adjacent_allies,as,7,pct,,,AS: op.gg + SeeMeta,Allies adjacent to a Lunar champion.
+Lunar,origin,A,3,adjacent_allies,as,10,pct,,,AS: op.gg + SeeMeta,Allies adjacent to a Lunar champion.
+Lunar,origin,A,4,adjacent_allies,as,14,pct,,,AS: op.gg + SeeMeta,Allies adjacent to a Lunar champion.
+Lunar,origin,A,5,adjacent_allies,as,18,pct,,,AS: op.gg + SeeMeta,Allies adjacent to a Lunar champion.
+Lunar,origin,A,2,adjacent_allies,ap,7,pct,,,18.4 patch notes,Post-18.4 (was 7/10/14/18).
+Lunar,origin,A,3,adjacent_allies,ap,12,pct,,,18.4 patch notes,Post-18.4 (was 7/10/14/18).
+Lunar,origin,A,4,adjacent_allies,ap,16,pct,,,18.4 patch notes,Post-18.4 (was 7/10/14/18).
+Lunar,origin,A,5,adjacent_allies,ap,20,pct,,,18.4 patch notes,Post-18.4 (was 7/10/14/18).
+Lunar,origin,A,2,members,as,14,pct,,,derived: 2x the adjacent value,Source says Lunar champions gain 100% more. Unverified whether 2x or the listed value.
+Lunar,origin,A,3,members,as,20,pct,,,derived: 2x the adjacent value,Source says Lunar champions gain 100% more. Unverified whether 2x or the listed value.
+Lunar,origin,A,4,members,as,28,pct,,,derived: 2x the adjacent value,Source says Lunar champions gain 100% more. Unverified whether 2x or the listed value.
+Lunar,origin,A,5,members,as,36,pct,,,derived: 2x the adjacent value,Source says Lunar champions gain 100% more. Unverified whether 2x or the listed value.
+Lunar,origin,A,2,members,ap,14,pct,,,derived: 2x the adjacent value,Same assumption.
+Lunar,origin,A,3,members,ap,24,pct,,,derived: 2x the adjacent value,Same assumption.
+Lunar,origin,A,4,members,ap,32,pct,,,derived: 2x the adjacent value,Same assumption.
+Lunar,origin,A,5,members,ap,40,pct,,,derived: 2x the adjacent value,Same assumption.
+Blossom,origin,A,3,members,ad,12,pct,,,3-9: patch notes through 18.6; 11: op.gg launch value,Post-18.6 (7 and 9 were 40/45 at launch). The 11-piece 100% was not re-verified.
+Blossom,origin,A,5,members,ad,30,pct,,,3-9: patch notes through 18.6; 11: op.gg launch value,Post-18.6 (7 and 9 were 40/45 at launch). The 11-piece 100% was not re-verified.
+Blossom,origin,A,7,members,ad,55,pct,,,3-9: patch notes through 18.6; 11: op.gg launch value,Post-18.6 (7 and 9 were 40/45 at launch). The 11-piece 100% was not re-verified.
+Blossom,origin,A,9,members,ad,65,pct,,,3-9: patch notes through 18.6; 11: op.gg launch value,Post-18.6 (7 and 9 were 40/45 at launch). The 11-piece 100% was not re-verified.
+Blossom,origin,A,11,members,ad,100,pct,,,3-9: patch notes through 18.6; 11: op.gg launch value,Post-18.6 (7 and 9 were 40/45 at launch). The 11-piece 100% was not re-verified.
+Blossom,origin,A,3,members,ap,12,pct,,,3-9: patch notes through 18.6; 11: op.gg launch value,Post-18.6 (7 and 9 were 40/45 at launch). The 11-piece 100% was not re-verified.
+Blossom,origin,A,5,members,ap,30,pct,,,3-9: patch notes through 18.6; 11: op.gg launch value,Post-18.6 (7 and 9 were 40/45 at launch). The 11-piece 100% was not re-verified.
+Blossom,origin,A,7,members,ap,55,pct,,,3-9: patch notes through 18.6; 11: op.gg launch value,Post-18.6 (7 and 9 were 40/45 at launch). The 11-piece 100% was not re-verified.
+Blossom,origin,A,9,members,ap,65,pct,,,3-9: patch notes through 18.6; 11: op.gg launch value,Post-18.6 (7 and 9 were 40/45 at launch). The 11-piece 100% was not re-verified.
+Blossom,origin,A,11,members,ap,100,pct,,,3-9: patch notes through 18.6; 11: op.gg launch value,Post-18.6 (7 and 9 were 40/45 at launch). The 11-piece 100% was not re-verified.
+Blossom,origin,A,3,members,hp,10,pct,,,op.gg launch values + patch notes,Percent of max health. Wisps are not modelled.
+Blossom,origin,A,5,members,hp,10,pct,,,op.gg launch values + patch notes,Percent of max health. Wisps are not modelled.
+Blossom,origin,A,7,members,hp,10,pct,,,op.gg launch values + patch notes,Percent of max health. Wisps are not modelled.
+Blossom,origin,A,9,members,hp,10,pct,,,op.gg launch values + patch notes,Percent of max health. Wisps are not modelled.
+Blossom,origin,A,11,members,hp,10,pct,,,op.gg launch values + patch notes,Percent of max health. Wisps are not modelled.
+Thornmaiden,origin,A,1,team,durability,5,pct,,,op.gg only,Rises to 10% with 6+ Zyra plants (bucket B row).
+Ravager,class,A,2,members,omnivamp,10,pct,,,op.gg only,Needs a lifesteal stat added to the sim. Bonus damage is in the bucket B row.
+Ravager,class,A,4,members,omnivamp,10,pct,,,op.gg only,Needs a lifesteal stat added to the sim. Bonus damage is in the bucket B row.
+Ravager,class,A,6,members,omnivamp,10,pct,,,op.gg only,Needs a lifesteal stat added to the sim. Bonus damage is in the bucket B row.
+Thornmaiden,origin,B,,,,,,,,summary only,Team durability rises from 5% to 10% while 6 or more Zyra plants are alive (plants are Zyra's ability).
+Fae,origin,B,,,,,,,,summary only,Pixies from team damage/healing/shielding: Fae gain 4.5%/7% AD and AP per Pixie at 2/4 (18.4) and heal below 50% health for 3/5% (18.5).
+Attuned,origin,B,,,,,,,,summary only,Team gains 5% durability or 5% damage amp depending on Alune's moon phase (durability 7%->5% in 18.5).
+Old Growth,origin,B,,,,,,,,summary only,Maokai permanently gains max health when enemies nearby die.
+Apex Predator,origin,C,,,,,,,,summary only,Elder Dragon takes 2 team slots and counts as +2 Riftbeast (changes trait counts).
+Avatar,origin,C,,,,,,,,summary only,Lux variants; the chosen origin counts twice (changes trait counts).
+Blackthorn,origin,C,,,,,,,,summary only,Sacrifices the ally on the Blackthorn hex before combat for health and role-based bonuses (op.gg name; Mobalytics calls it Eldritch).
+Bounty Seeker,origin,C,,,,,,,,summary only,Bounty quests for gold and rerolls.
+Caustic,origin,C,,,,,,,,summary only,Shred and Sunder (armor and MR reduction) on enemies.
+Coven,origin,C,,,,,,,,summary only,Essence economy and cashouts.
+Eclipse,origin,C,,,,,,,,summary only,"Executes the lowest-health enemy after 8 seconds, then periodically. No champions carry it."
+Elderwood,origin,C,,,,,,,,summary only,Placeable plants and the Deepwood Protector.
+Emerald Aspect,origin,C,,,,,,,,summary only,Taric pairs with an ally.
+Flora Fatalis,origin,C,,,,,,,,summary only,Mana and heals on takedown.
+Greenfather,origin,C,,,,,,,,summary only,Ivern grows hexes from seeds.
+Inferno,origin,C,,,,,,,,summary only,"Burn and Wound damage over time, shop ignition."
+Primal,origin,C,,,,,,,,summary only,Choose Primal Blessings.
+Rival,origin,C,,,,,,,,summary only,Takedown counters and rewards.
+Solar,origin,C,,,,,,,,summary only,Shield and bonus magic damage that scales with 3-star champions.
+Sprykin,origin,C,,,,,,,,summary only,Big Furry Friend and its rider.
+Summoner,class,C,,,,,,,,summary only,Empowers summons.
+Vanguard,class,C,,,,,,,,summary only,Max-health shield at combat start and below 50% health. Needs a shield system.
+Rapidfire,class,B,2,members,as,3,pct,per_attack,10,"values: 18.5 patch notes; stack cap from op.gg launch text, not re-verified","Attack speed stacks on every attack, up to param stacks."
+Rapidfire,class,B,3,members,as,5,pct,per_attack,10,"values: 18.5 patch notes; stack cap from op.gg launch text, not re-verified","Attack speed stacks on every attack, up to param stacks."
+Rapidfire,class,B,4,members,as,7,pct,per_attack,10,"values: 18.5 patch notes; stack cap from op.gg launch text, not re-verified","Attack speed stacks on every attack, up to param stacks."
+Rapidfire,class,B,5,members,as,10,pct,per_attack,10,"values: 18.5 patch notes; stack cap from op.gg launch text, not re-verified","Attack speed stacks on every attack, up to param stacks."
+Spellweaver,class,B,2,members,ap,1,pct,per_cast,,op.gg only (no later change found),"AP stacks on every cast, no cap."
+Spellweaver,class,B,4,members,ap,1,pct,per_cast,,op.gg only (no later change found),"AP stacks on every cast, no cap."
+Spellweaver,class,B,6,members,ap,2,pct,per_cast,,op.gg only (no later change found),"AP stacks on every cast, no cap."
+Hunter,class,B,2,members,damage_amp,10,pct,no_target_swap,3,3 seconds from patch 18.2 notes; 10% from op.gg,Damage amp while the Hunter has kept the same target for param seconds.
+Hunter,class,B,3,members,damage_amp,10,pct,no_target_swap,3,3 seconds from patch 18.2 notes; 10% from op.gg,Damage amp while the Hunter has kept the same target for param seconds.
+Hunter,class,B,4,members,damage_amp,10,pct,no_target_swap,3,3 seconds from patch 18.2 notes; 10% from op.gg,Damage amp while the Hunter has kept the same target for param seconds.
+Hunter,class,B,5,members,damage_amp,10,pct,no_target_swap,3,3 seconds from patch 18.2 notes; 10% from op.gg,Damage amp while the Hunter has kept the same target for param seconds.
+Ravager,class,B,2,members,damage_amp,12,pct,double_vs_low_health,50,op.gg only (no later change found),"Bonus damage, doubled against targets below param% health."
+Ravager,class,B,4,members,damage_amp,25,pct,double_vs_low_health,50,op.gg only (no later change found),"Bonus damage, doubled against targets below param% health."
+Ravager,class,B,6,members,damage_amp,40,pct,double_vs_low_health,50,op.gg only (no later change found),"Bonus damage, doubled against targets below param% health."
+Monolith,origin,B,1,members,armor,10,flat,per_enemy_targeting,,op.gg only,Per enemy currently targeting this unit.
+Monolith,origin,B,1,members,mr,10,flat,per_enemy_targeting,,op.gg only,Per enemy currently targeting this unit.
+Riftbeast,origin,B,7,members,ad,5,pct,every_seconds,5,AD/AP 5% from 18.5 notes; 10-piece carrying the same effect is assumed,"Every param seconds, stacking. The other stats this trait grows (AS and more) are not modelled."
+Riftbeast,origin,B,10,members,ad,5,pct,every_seconds,5,AD/AP 5% from 18.5 notes; 10-piece carrying the same effect is assumed,"Every param seconds, stacking. The other stats this trait grows (AS and more) are not modelled."
+Riftbeast,origin,B,7,members,ap,5,pct,every_seconds,5,AD/AP 5% from 18.5 notes; 10-piece carrying the same effect is assumed,"Every param seconds, stacking. The other stats this trait grows (AS and more) are not modelled."
+Riftbeast,origin,B,10,members,ap,5,pct,every_seconds,5,AD/AP 5% from 18.5 notes; 10-piece carrying the same effect is assumed,"Every param seconds, stacking. The other stats this trait grows (AS and more) are not modelled."
